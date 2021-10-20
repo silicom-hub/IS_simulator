@@ -1,0 +1,12 @@
+dn: uid=tgourmelen,dc=boulangerie,dc=local
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: posixAccount
+cn: tgourmelen
+sn: Gourmelen
+uid: tgourmelen
+homeDirectory: /home/tgourmelen
+loginShell: /bin/bash
+mail: tgourmelen@boulangerie.local
+uidNumber: 1501
+gidNumber: 101

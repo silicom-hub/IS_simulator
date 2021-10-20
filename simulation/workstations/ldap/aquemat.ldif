@@ -1,0 +1,12 @@
+dn: uid=aquemat,dc=boulangerie,dc=local
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: posixAccount
+cn: aquemat
+sn: Aquemat
+uid: aquemat
+homeDirectory: /home/aquemat
+loginShell: /bin/bash
+mail: aquemat@boulangerie.local
+uidNumber: 1502
+gidNumber: 102

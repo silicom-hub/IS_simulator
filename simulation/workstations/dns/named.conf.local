@@ -1,0 +1,16 @@
+zone "site-1.com" {
+type master;
+file "/etc/bind/db.site-1.com";
+};
+zone "mail.boulangerie.local" {
+type master;
+file "/etc/bind/db.mail.boulangerie.local";
+};
+zone "boulangerie.local" {
+type master;
+file "/etc/bind/db.boulangerie.local";
+};
+zone "workstation1.boulangerie.local" {
+type master;
+file "/etc/bind/db.workstation1.boulangerie.local";
+};

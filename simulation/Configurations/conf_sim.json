@@ -1,0 +1,46 @@
+{
+    "workstations": [
+                    {"hostname":"workstation1","users": [
+                                                        {"name":"aquemat","scenarios":[
+                                                                                       {"name":"smb_cycle","rep":"1","begin":"0","args":{"nb_actions":"10","username":"aquemat","password":"aquemat123","workstation_name":"workstation1","server_name":"samba.silicom.com","server_ip":"10.122.1.17","service_name":"shareFile"}}
+                                                                                        ]
+                                                        }
+                                                        ]
+                    },
+                    {"hostname":"workstation2","users": [
+                                                        {"name":"tgourmelen","scenarios":[
+                                                                                        {"name":"dvwa","rep":"3","begin":"0","args":{"nb_actions":"3","url":"http://dvwa.silicom.com/", "proxy":""}},
+                                                                                        {"name":"mail_cycle","rep":"3","begin":"0","args":{"nb_actions":"4","smtp_server_ip":"10.122.1.12","imap_server_ip":"10.122.1.12","login":"tgourmelen","password":"tgourmelen123","FROM":"tgourmelen@silicom.com","TO":["ogesny@silicom.com","pdelesques@silicom.com","aquemat@silicom.com"],"subject":"","msg":"","attachements":[["file","/tmp/sim_user/hacker.exe"]]}}
+                                                                                        ]
+                                                        }
+                                                        ]
+                    },
+                    {"hostname":"workstation3","users": [
+                                                        {"name":"pdelesques","scenarios":[
+                                                                                        {"name":"dvwa","rep":"3","begin":"0","args":{"nb_actions":"3","url":"http://dvwa.silicom.com/", "proxy":""}},
+                                                                                        {"name":"mail_cycle","rep":"3","begin":"0","args":{"nb_actions":"4","smtp_server_ip":"10.122.1.12","imap_server_ip":"10.122.1.12","login":"pdelesques","password":"pdelesques123","FROM":"pdelesques@silicom.com","TO":["aquemat@silicom.com","ogesny@silicom.com","tgourmelen@silicom.com"],"subject":"","msg":"","attachements":[["file","/tmp/sim_user/hacker.exe"]]}}
+                                                                                        ]
+                                                        }
+                                                        ]
+                    },
+                    {"hostname":"workstation4","users": [
+                                                        {"name":"ogesny","scenarios":[
+                                                                                        {"name":"dvwa","rep":"3","begin":"0","args":{"nb_actions":"3","url":"http://dvwa.silicom.com/", "proxy":""}},
+                                                                                        {"name":"mail_cycle","rep":"3","begin":"0","args":{"nb_actions":"4","smtp_server_ip":"10.122.1.12","imap_server_ip":"10.122.1.12","login":"ogesny","password":"ogesny123","FROM":"ogesny@silicom.com","TO":["aquemat@silicom.com","tgourmelen@silicom.com","pdelesques@silicom.com"],"subject":"","msg":"","attachements":[["file","/tmp/sim_user/hacker.exe"]]}}
+                                                                                        ]
+                                                        }
+                                                        ]
+                    },
+                    {"hostname":"hacker","users": [
+                                                        {"name":"hacker","scenarios":[
+                                                                                        {"name":"chat_web_application_signup","rep":"0","begin":"0","args":{"url":"http://10.122.0.21/","username":"test", "email":"test@test.com", "password":"test123","proxy":""}},
+                                                                                        {"name":"chat_web_application_signup","rep":"0","begin":"0","args":{"url":"http://10.122.0.21/","username":"test2", "email":"test2@test.com", "password":"test123","proxy":""}},
+                                                                                        {"name":"chat_web_application","rep":"2","begin":"0","args":{"nb_actions":"10","url":"http://10.122.0.21/","username":"test", "receivers":["test2"], "password":"test123","proxy":""}},
+                                                                                        {"name":"dvwa","rep":"3","begin":"0","args":{"nb_actions":"3","url":"http://10.122.1.15/", "proxy":""}},
+                                                                                        {"name":"dvwa_attack","rep":"0","begin":"75","args":{"url":"http://10.122.1.15/"}}                                                                                       
+                                                                                    ]
+                                                        }
+                                                        ]
+                    }
+    ]
+}

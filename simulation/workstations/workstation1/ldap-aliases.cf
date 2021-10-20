@@ -1,0 +1,9 @@
+server_host = 10.122.1.10 
+server_port = 389
+search_base = dc=boulangerie,dc=local 
+query_filter = (&(objectClass=InetOrgPerson)(mail=%s)) 
+result_attribute = mail 
+bind = yes 
+bind_dn = cn=admin,dc=boulangerie,dc=local 
+bind_pw = my_password 
+version = 3

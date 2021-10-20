@@ -1,0 +1,18 @@
+
+$TTL       604800
+@       IN      SOA     mail.boulangerie.local. admin.mail.boulangerie.local. (
+                                 3       ;     Serial
+                            604800       ;     Refresh
+                             86400       ;     Retry
+                           2419200       ;     Expire
+                            604800   )   ;     Negative Cache TTL
+;
+; name servers - NS records
+@        IN      NS      mail.boulangerie.local.
+mail.boulangerie.local.   IN      A       10.122.1.12
+www.mail.boulangerie.local.   IN      CNAME       mail.boulangerie.local.
+@     IN      MX     10     mail.boulangerie.local.
+pop3     IN      A      10.122.1.12
+imap     IN      A      10.122.1.12
+imap4    IN      A      10.122.1.12
+smtp     IN      A      10.122.1.12

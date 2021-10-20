@@ -1,0 +1,39 @@
+{
+    "networks": [
+        {"name": "internetPasnet", "subnet": "172.20.0.0/16", "driver":"bridge", "workstations": [
+            { "hostname": "site_1" },
+            { "hostname": "site_2" },
+            { "hostname": "site_3" },
+            { "hostname": "site_4" },
+            { "hostname": "site_5" },
+            { "hostname": "dns" }
+            ] }, 
+        {"name": "private_network", "subnet": "192.168.1.0/24", "driver":"bridge", "workstations": [
+            { "hostname": "my_workstation" }
+            ] }
+    ],
+
+    "workstations": [
+        {"hostname":"site_1", "os/image":"httpd", "dns":["172.20.0.7"], "networks": [
+            {"name": "internetPasnet", "mac_address": "11:11:11:11:11:12", "ip_v4": "172.20.0.2", "subnet network": "16", "Gateway": "172.20.0.1"}
+            ]},
+        {"hostname":"site_2", "os/image":"httpd", "dns":["172.20.0.7"], "networks": [
+            {"name": "internetPasnet", "mac_address": "11:11:11:11:11:13", "ip_v4": "172.20.0.3", "subnet network": "16", "Gateway": "172.20.0.1"}
+            ]},
+        {"hostname":"site_3", "os/image":"httpd", "dns":["172.20.0.7"],"networks": [
+            {"name": "internetPasnet", "mac_address": "11:11:11:11:11:14", "ip_v4": "172.20.0.4", "subnet network": "16", "Gateway": "172.20.0.1"}
+            ]},
+        {"hostname":"site_4", "os/image":"httpd", "dns":["172.20.0.7"], "networks": [
+            {"name": "internetPasnet", "mac_address": "11:11:11:11:11:15", "ip_v4": "172.20.0.5", "subnet network": "16", "Gateway": "172.20.0.1"}
+            ]},
+        {"hostname":"site_5", "os/image":"httpd", "dns":["172.20.0.7"], "networks": [
+            {"name": "internetPasnet", "mac_address": "11:11:11:11:11:16", "ip_v4": "172.20.0.6", "subnet network": "16", "Gateway": "172.20.0.1"}
+            ]},
+        {"hostname":"dns", "os/image":"internetsystemsconsortium/bind9:9.16", "dns":["172.20.0.7"], "volumes":["/etc/bind"], "networks": [
+            {"name": "internetPasnet", "mac_address": "11:11:11:11:11:17", "ip_v4": "172.20.0.7", "subnet network": "16", "Gateway": "172.20.0.1"}
+            ]},
+        {"hostname":"my_workstation", "os/image":"ubuntu", "dns":["172.20.0.7"], "networks": [
+            {"name": "private_network", "mac_address": "11:11:11:11:11:11", "ip_v4": "192.168.1.10", "subnet network": "24", "Gateway": "192.168.1.1"}
+            ]}
+    ]
+}

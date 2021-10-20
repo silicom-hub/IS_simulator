@@ -1,0 +1,69 @@
+########### Logic
+Actions:
+
+ - publish_website                                       [local_folder_path_to_webcontent]
+ - dns_resolve_name                                      [name, ip]
+ - add_route                                             []
+ - delete_route                                          []
+
+ - add_user                                              [user_name, [user_group, ...]]
+
+ - start_service                                         [service_name]
+ - stop_service                                          [service_name]
+ - restart_service                                       [service_name]
+
+ - install                                               [name]
+
+
+########### Simulation
+Actions:
+
+## Zimbra
+ - zimbra_connect
+ - zimbra_disconnect
+
+## Rocket-chat
+
+
+## share-file
+
+
+## RDP
+
+
+## Web
+ - request_website                                      [url]
+
+{"name":"install", "args": {"module":"sudo"} },
+{"name":"install", "args": {"module":"iproute2"} },
+{"name":"install", "args": {"module":"curl"} },
+{"name":"install", "args": {"module":"nano"} },
+{"name":"install", "args": {"module":"iputils-ping"} },
+{"name":"install", "args": {"module":"wget"} },
+{"name":"install", "args": {"module":"dialog"} },
+{"name":"install", "args": {"module":"software-properties-common"} },
+{"name":"install", "args": {"module":"dnsutils"} },
+{"name":"install", "args": {"module":"net-tools"} },
+{"name":"configure_mail_dns", "args": {"dns_hostname":"dns", "domain_name":"boulangerie.lan", "mail_hostname":"mail", "mail_ip":"192.168.1.11"} },
+{"name":"configure_zimbra", "args": {"dns_hostname":"dns", "domain_name":"boulangerie.lan", "mail_hostname":"mail", "mail_ip":"192.168.1.11", "admin_password":"admin123"} },
+{"name":"copy_file", "args": {"local_path":"infinite_loop.sh", "remote_path":"/infinite_loop.sh"} },
+{"name":"launch_sh", "args": {"remote_path":"/infinite_loop.sh"} }        
+
+
+{"name":"add_user", "args": {"username": "me", "rights": [""] } }
+{"name":"install", "args": {"module":"update"} }
+
+{"name":"add_route", "args": {"target_subnet_network":"172.20.0.0/24", "gateway_ip":"192.168.1.254"} }
+
+
+sudo iptables -I DOCKER-USER -i br-36ae1c2b67ef -o br-2801868c2569 -j ACCEPT
+sudo iptables -I DOCKER-USER -i br-2801868c2569 -o br-36ae1c2b67ef -j ACCEPT
+
+
+sudo -u www-data php occ app:disable user_ldap
+
+// {"name":"add_user_cloud", "args": {"uid":"mmeunier", "name":"Marc-Antoine Meunier", "password":"mmeunier123"} }
+
+
+sudo iptables -I DOCKER-USER -i br-6178f89e24eb -o br-5863bd7c3f07 -j ACCEPT
+sudo iptables -I DOCKER-USER -i br-5863bd7c3f07 -o br-6178f89e24eb -j ACCEPT

@@ -1,0 +1,73 @@
+{
+    "networks": [
+        {"name": "internetPasnet", "subnet": "10.122.0.1/24", "driver":"bridge", "workstations": [
+            { "hostname": "hacker" },
+            { "hostname": "site-1" },
+            { "hostname": "site-2" },
+            { "hostname": "site-3" },
+            { "hostname": "dns" }
+            ] }, 
+        {"name": "privateNetwork", "subnet": "10.122.1.1/24", "driver":"bridge", "workstations": [
+            { "hostname": "ldap_server" },
+            { "hostname": "workstation_1" },
+            { "hostname": "workstation_2" },
+            { "hostname": "workstation_3" }
+            ] }
+    ],
+
+    "workstations": [
+        {"hostname":"hacker", "domain_name":"", "os/image":"debian", "dns":["10.0.0.7", "8.8.8.8"], "volumes":[""], "depends_on":[""], "networks": [
+            {"name": "internetPasnet", "interface":"eth1", "mac_address": "11:11:11:11:11:01", "ip_v4": "10.122.0.20", "subnet": "24"}
+            ],
+        "gateway":"10.122.0.1"},
+        {"hostname":"dns", "domain_name":"", "os/image":"ubuntu:18.04", "dns":["10.0.0.7", "8.8.8.8"], "volumes":[""],  "depends_on":[""],"networks": [
+            {"name": "internetPasnet", "interface":"eth1", "mac_address": "11:11:11:11:11:10", "ip_v4": "10.122.0.12", "subnet": "24"}
+            ]
+        ,"gateway":"10.122.0.1"},
+
+        
+        {"hostname":"workstation1", "domain_name":"", "os/image":"ubuntu:18.04", "dns":["10.0.0.7", "8.8.8.8"], "volumes":[""],  "depends_on":[""],"networks": [
+            {"name": "privateNetwork", "interface":"eth1", "mac_address": "11:11:11:11:11:10", "ip_v4": "10.122.1.40", "subnet": "24"}
+            ]
+        ,"gateway":"10.122.1.1"},
+        {"hostname":"workstation2", "domain_name":"", "os/image":"ubuntu:18.04", "dns":["10.0.0.7", "8.8.8.8"], "volumes":[""],  "depends_on":[""],"networks": [
+            {"name": "privateNetwork", "interface":"eth1", "mac_address": "11:11:11:11:11:10", "ip_v4": "10.122.1.41", "subnet": "24"}
+            ]
+        ,"gateway":"10.122.1.1"},
+        {"hostname":"workstation3", "domain_name":"", "os/image":"ubuntu:18.04", "dns":["10.0.0.7", "8.8.8.8"], "volumes":[""],  "depends_on":[""],"networks": [
+            {"name": "privateNetwork", "interface":"eth1", "mac_address": "11:11:11:11:11:10", "ip_v4": "10.122.1.42", "subnet": "24"}
+            ]
+        ,"gateway":"10.122.1.1"},
+        {"hostname":"workstation4", "domain_name":"", "os/image":"ubuntu:18.04", "dns":["10.0.0.7", "8.8.8.8"], "volumes":[""],  "depends_on":[""],"networks": [
+            {"name": "privateNetwork", "interface":"eth1", "mac_address": "11:11:11:11:11:10", "ip_v4": "10.122.1.43", "subnet": "24"}
+            ]
+        ,"gateway":"10.122.1.1"},
+        {"hostname":"workstation5", "domain_name":"", "os/image":"ubuntu:18.04", "dns":["10.0.0.7", "8.8.8.8"], "volumes":[""],  "depends_on":[""],"networks": [
+            {"name": "internetPasnet", "interface":"eth1", "mac_address": "11:11:11:11:11:10", "ip_v4": "10.122.0.40", "subnet": "24"}
+            ]
+        ,"gateway":"10.122.0.1"},
+        {"hostname":"dvwa", "domain_name":"", "os/image":"ubuntu:18.04", "dns":["10.0.0.7", "8.8.8.8"], "volumes":[""],  "depends_on":[""],"networks": [
+            {"name": "privateNetwork", "interface":"eth1", "mac_address": "11:11:11:11:11:10", "ip_v4": "10.122.1.15", "subnet": "24"}
+            ]
+        ,"gateway":"10.122.1.1"},
+        {"hostname":"ldap", "domain_name":"", "os/image":"ubuntu:18.04", "dns":["10.0.0.7", "8.8.8.8"], "volumes":[""],  "depends_on":[""],"networks": [
+            {"name": "privateNetwork", "interface":"eth1", "mac_address": "11:11:11:11:11:10", "ip_v4": "10.122.1.10", "subnet": "24"}
+            ]
+        ,"gateway":"10.122.1.1"},
+        {"hostname":"mail", "domain_name":"", "os/image":"ubuntu:18.04", "dns":["10.0.0.7", "8.8.8.8"], "volumes":[""],  "depends_on":[""],"networks": [
+            {"name": "privateNetwork", "interface":"eth1", "mac_address": "11:11:11:11:11:10", "ip_v4": "10.122.1.12", "subnet": "24"}
+            ]
+        ,"gateway":"10.122.1.1"},
+        {"hostname":"elk", "domain_name":"", "os/image":"ubuntu:18.04", "dns":["10.0.0.7", "8.8.8.8"], "volumes":[""],  "depends_on":[""],"networks": [
+            {"name": "privateNetwork", "interface":"eth1", "mac_address": "11:11:11:11:11:10", "ip_v4": "10.122.1.11", "subnet": "24"}
+            ]
+        ,"gateway":"10.122.1.1"},
+
+        {"hostname":"router", "domain_name":"", "os/image":"debian", "dns":["10.0.0.7"], "volumes":[""], "depends_on":[""], "networks": [
+            {"name": "privateNetwork", "interface":"eth1", "mac_address": "11:11:11:11:11:14", "ip_v4": "10.122.1.1", "subnet": "24"},
+            {"name": "internetPasnet", "interface":"eth2", "mac_address": "11:11:11:11:11:15", "ip_v4": "10.122.0.1", "subnet": "24"},
+            {"name": "lxdbr0", "interface":"eth3", "mac_address": "11:11:11:11:11:15", "ip_v4": "10.159.8.2", "subnet": "24"}
+            ]
+        ,"gateway":"10.159.8.1"}
+    ]
+}

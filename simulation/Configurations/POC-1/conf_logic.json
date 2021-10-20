@@ -1,0 +1,41 @@
+{
+    "workstations": [
+        { "hostname": "site_1", "actions": [
+                                                    {"name":"update", "args": {"":""} },
+                                                    {"name":"publish_website", "args": {"local_path":"configuration/services/web/*"} }
+                                                    ] },
+        { "hostname": "site_2", "actions": [
+                                                    {"name":"update", "args": {"":""} },
+                                                    {"name":"publish_website", "args": {"local_path":"configuration/services/web/*"} }
+                                                    ] },
+        { "hostname": "site_3", "actions": [
+                                                    {"name":"update", "args": {"":""} },
+                                                    {"name":"publish_website", "args": {"local_path":"configuration/services/web/*"} }
+                                                    ] },
+        { "hostname": "site_4", "actions": [
+                                                    {"name":"update", "args": {"":""} },
+                                                    {"name":"publish_website", "args": {"local_path":"configuration/services/web/*"} }
+                                                    ] },
+        { "hostname": "site_5", "actions": [
+                                                    {"name":"update", "args": {"":""} },
+                                                    {"name":"publish_website", "args": {"local_path":"configuration/services/web/*"} }
+                                                    ] },
+        { "hostname": "dns", "actions": [
+                                                    {"name":"update", "args": {"":""} },
+                                                    {"name":"dns_resolve_name", "args": {"hostname":"dns", "domain_name": "site-1.com", "ip_resolution":"172.20.0.2"} },
+                                                    {"name":"dns_resolve_name", "args": {"hostname":"dns", "domain_name": "site-2.com", "ip_resolution":"172.20.0.3"} },
+                                                    {"name":"dns_resolve_name", "args": {"hostname":"dns", "domain_name": "site-3.com", "ip_resolution":"172.20.0.4"} },
+                                                    {"name":"dns_resolve_name", "args": {"hostname":"dns", "domain_name": "site-4.com", "ip_resolution":"172.20.0.5"} },
+                                                    {"name":"dns_resolve_name", "args": {"hostname":"dns", "domain_name": "site-5.com", "ip_resolution":"172.20.0.6"} }
+                                                    ] },
+        { "hostname": "my_workstation", "actions": [
+                                                    {"name":"update", "args": {"":""} },
+                                                    {"name":"install", "args": {"module":"nano"} },
+                                                    {"name":"install", "args": {"module":"curl"} },
+                                                    {"name":"install", "args": {"module":"iproute2"} },
+                                                    {"name":"install", "args": {"module":"iputils-ping"} },
+                                                    {"name":"copy_file", "args": {"local_path":"configuration/infinite_loop.sh", "remote_path":"infinite_loop.sh"} },
+                                                    {"name":"execute_script", "args": {"remote_path":"simulation.sh"} }
+                                                    ] }
+    ]
+}

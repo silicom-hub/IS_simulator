@@ -1,0 +1,11 @@
+{
+    "users": [
+        {"name":"hacker","hostname":"hacker", "password":"hacker123", "password_ldap":""},
+        {"name":"fantony","hostname":"workstation_2", "password":"fantony123", "password_ldap":""}
+        
+    ],
+    "simulation_info": {
+        "websites":["https://www.site-1.com/", "https://www.site-2.com/", "https://www.site-3.com/"],
+        "owncloud_url":"http://172.20.0.8:8080/"
+    }
+}

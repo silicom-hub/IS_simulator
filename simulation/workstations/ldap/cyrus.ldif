@@ -1,0 +1,5 @@
+dn: uid=cyrus,dc=boulangerie,dc=local
+objectClass: inetOrgPerson
+cn: cyrus
+sn: Cyrus
+uid: cyrus

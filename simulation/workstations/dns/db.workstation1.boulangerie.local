@@ -1,0 +1,13 @@
+
+$TTL       604800
+@       IN      SOA     workstation1.boulangerie.local. admin.workstation1.boulangerie.local. (
+                                 3       ;     Serial
+                            604800       ;     Refresh
+                             86400       ;     Retry
+                           2419200       ;     Expire
+                            604800   )   ;     Negative Cache TTL
+;
+; name servers - NS records
+@        IN      NS      workstation1.boulangerie.local.
+workstation1.boulangerie.local.   IN      A       10.122.1.40
+www.workstation1.boulangerie.local.   IN      CNAME       workstation1.boulangerie.local.

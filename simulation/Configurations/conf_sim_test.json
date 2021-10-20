@@ -1,0 +1,48 @@
+{
+    "workstations": [
+                    {"hostname":"workstation1","users": [
+                                                        {"name":"aquemat","scenarios":[
+                                                                                       {"name":"dvwa","rep":"3","begin":"0","args":{"nb_actions":"100"}}
+                                                                                        ]
+                                                        }
+                                                        ]
+                    },
+                    {"hostname":"workstation2","users": [
+                                                        {"name":"tgourmelen","scenarios":[
+                                                                                        {"name":"dvwa","rep":"3","begin":"0","args":{"nb_actions":"100"}}
+                                                                                        ]
+                                                        }
+                                                        ]
+                    },
+                    {"hostname":"workstation3","users": [
+                                                        {"name":"pdelesques","scenarios":[
+                                                                                        {"name":"dvwa","rep":"3","begin":"0","args":{"nb_actions":"100"}}
+                                                                                        ]
+                                                        }
+                                                        ]
+                    },
+                    {"hostname":"workstation4","users": [
+                                                        {"name":"ogesny","scenarios":[
+                                                                                        {"name":"dvwa","rep":"3","begin":"0","args":{"nb_actions":"100"}}
+                                                                                        ]
+                                                        }
+                                                        ]
+                    },
+                    {"hostname":"workstation5","users": [
+                                                        {"name":"root","scenarios":[
+                                                                                        {"name":"dvwa","rep":"3","begin":"0","args":{"nb_actions":"100"}}
+                                                                                        ]
+                                                        }
+                                                        ]
+                    },
+                    {"hostname":"hacker","users": [
+                                                        {"name":"root","scenarios":[
+                                                                                        {"name":"dvwa","rep":"2","begin":"0","args":{"nb_actions":"100"}},
+                                                                                        {"name":"dvwa_attack","rep":"1","begin":"2","args":{"":""}}
+                                                                                    ]
+                                                        }
+                                                        ]
+                    }
+    ]
+}
+

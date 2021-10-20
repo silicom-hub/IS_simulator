@@ -1,0 +1,78 @@
+{
+    "networks": [
+        {"name": "internetPasnet", "subnet": "10.122.0.1/24", "driver":"bridge"}, 
+        {"name": "silicomNetwork", "subnet": "10.122.1.1/24", "driver":"bridge"}
+    ],
+
+    "workstations": [
+        {"hostname":"router", "os/image":"debian", "networks": [
+            {"name": "silicomNetwork", "interface":"eth1", "ip_v4": "10.122.1.1", "subnet": "24"},
+            {"name": "internetPasnet", "interface":"eth2", "ip_v4": "10.122.0.1", "subnet": "24"},
+            {"name": "lxdbr0", "interface":"eth3", "ip_v4": "default_ip_on_lxdbr0", "subnet": "24"}
+            ]
+        ,"gateway":"default_gateway_on_lxdbr0"},
+
+
+        {"hostname":"dns", "os/image":"ubuntu:18.04",   "networks": [
+            {"name": "internetPasnet", "interface":"eth1", "ip_v4": "10.122.0.14", "subnet": "24"}
+            ]
+        ,"gateway":"10.122.0.1"},
+
+        {"hostname":"chat", "os/image":"ubuntu:18.04",   "networks": [
+            {"name": "internetPasnet", "interface":"eth1", "ip_v4": "10.122.0.21", "subnet": "24"}
+            ]
+        ,"gateway":"10.122.0.1"},
+
+        {"hostname":"hacker", "os/image":"ubuntu:18.04",   "networks": [
+            {"name": "internetPasnet", "interface":"eth1", "ip_v4": "10.122.0.40", "subnet": "24"}
+            ]
+        ,"gateway":"10.122.0.1"},
+
+
+        {"hostname":"ldap", "os/image":"ubuntu:18.04",   "networks": [
+            {"name": "silicomNetwork", "interface":"eth1", "ip_v4": "10.122.1.10", "subnet": "24"}
+            ]
+        ,"gateway":"10.122.1.1"},
+
+        {"hostname":"mail", "os/image":"ubuntu:18.04",   "networks": [
+            {"name": "silicomNetwork", "interface":"eth1", "ip_v4": "10.122.1.12", "subnet": "24"}
+            ]
+        ,"gateway":"10.122.1.1"},
+
+        {"hostname":"samba", "os/image":"ubuntu:18.04",   "networks": [
+            {"name": "silicomNetwork", "interface":"eth1", "ip_v4": "10.122.1.17", "subnet": "24"}
+            ]
+        ,"gateway":"10.122.1.1"},
+
+        {"hostname":"dvwa", "os/image":"ubuntu:18.04",   "networks": [
+            {"name": "silicomNetwork", "interface":"eth1", "ip_v4": "10.122.1.15", "subnet": "24"}
+            ]
+        ,"gateway":"10.122.1.1"},
+
+        {"hostname":"elk", "os/image":"ubuntu:18.04",   "networks": [
+            {"name": "silicomNetwork", "interface":"eth1", "ip_v4": "10.122.1.11", "subnet": "24"}
+            ]
+        ,"gateway":"10.122.1.1"},
+
+        {"hostname":"workstation1", "os/image":"ubuntu:18.04",   "networks": [
+            {"name": "silicomNetwork", "interface":"eth1", "ip_v4": "10.122.1.40", "subnet": "24"}
+            ]
+        ,"gateway":"10.122.1.1"},
+
+        {"hostname":"workstation2", "os/image":"ubuntu:18.04",   "networks": [
+            {"name": "silicomNetwork", "interface":"eth1", "ip_v4": "10.122.1.41", "subnet": "24"}
+            ]
+        ,"gateway":"10.122.1.1"},
+
+        {"hostname":"workstation3", "os/image":"ubuntu:18.04",   "networks": [
+            {"name": "silicomNetwork", "interface":"eth1", "ip_v4": "10.122.1.42", "subnet": "24"}
+            ]
+        ,"gateway":"10.122.1.1"},
+
+        {"hostname":"workstation4", "os/image":"ubuntu:18.04",   "networks": [
+            {"name": "silicomNetwork", "interface":"eth1", "ip_v4": "10.122.1.43", "subnet": "24"}
+            ]
+        ,"gateway":"10.122.1.1"}
+
+    ]
+}

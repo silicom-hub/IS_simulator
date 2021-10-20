@@ -1,0 +1,12 @@
+{
+    "users": [
+        { "user": { "name": "me", "workstation":"my_workstation","Actions": [
+                                                                        {"name":"request_website", "args": ["www.site_1.com"] },
+                                                                        {"name":"request_website", "args": ["www.site_2.com"] },
+                                                                        {"name":"request_website", "args": ["www.site_3.com"] },
+                                                                        {"name":"request_website", "args": ["www.site_4.com"] },
+                                                                        {"name":"request_website", "args": ["www.site_5.com"] }
+                                                                        ] } }
+        
+    ]
+}
