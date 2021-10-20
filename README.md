@@ -1,6 +1,6 @@
 # IS_simulator V0.9
 
-SI Simulator (IT System Simulator) is a freely available digital simulation platform developed by SILICOM. It simulates a complex digital closed space environment and, within it, user interactions (attack and life scripts) with different services (dns, routeur/firewall, file server, mail, user authentication system, chat application, vulnerable website, log analysis tool, threat detection engine). It is a fully versatile and configurable tool that can be used as a test and demonstration platform, or as an educational tool as well as a basis for producing cybersecurity data sets. Primarily designed to serve as a test environment for the prototypes of AI-based security attacks and defenses developed by SILICOM, it now offers other possible uses to the users.
+IS Simulator (Information System or IT System Simulator) is a freely available digital simulation platform developed by SILICOM. It simulates a complex digital closed space environment and, within it, user interactions (attack and life scripts) with different services (dns, routeur/firewall, file server, mail, user authentication system, chat application, vulnerable website, log analysis tool, threat detection engine). It is a fully versatile and configurable tool that can be used as a test and demonstration platform, or as an educational tool as well as a basis for producing cybersecurity data sets. Primarily designed to serve as a test environment for the prototypes of AI-based security attacks and defenses developed by SILICOM, it now offers other possible uses to the users.
 
 It's written in Python and using LinuX Containers (LXC) to simulate realistic networks.
 
@@ -187,6 +187,6 @@ Change the values of the key `gateway` and the key `lxdbr0` `ip_v4` to your own 
             {"name": "internetPasnet", "interface":"eth2", "mac_address": "11:11:11:11:11:15", "ip_v4": "10.122.0.1", "subnet": "24"},
             {"name": "lxdbr0", "interface":"eth3", "mac_address": "11:11:11:11:11:15", "ip_v4": "<IP in range of lxdbr0 visible via ip a>", "subnet": "24"}
             ]
-        ,"gateway":"<ip lxdbr0 isible via ip a>"}
+        ,"gateway":"<ip lxdbr0 visible via ip a>"}
 
 ```
