@@ -8,7 +8,7 @@ import datetime
 import threading
 from colorama import Fore, Style
 from essential_generators import DocumentGenerator
-from webLib import create_driver, get_current_page,  dvwa_login, dvwa_command_injection, dvwa_xss_reflected, move_2_link, change_security, chat_web_application_login, chat_web_application_signup_, chat_web_application_search_user, chat_web_application_send_msg, chat_web_application_logout
+from webLib import create_driver, dvwa_login, dvwa_command_injection, dvwa_xss_reflected, move_2_link, change_security, chat_web_application_login, chat_web_application_signup_, chat_web_application_search_user, chat_web_application_send_msg, chat_web_application_logout
 
 def dvwa(args):
     base_url = args["url"]
@@ -72,7 +72,7 @@ def dvwa_attack(args):
             client.send(b'cat /etc/passwd\n')
         response = client.recv(1024)
         if response != "":
-            print(Fore.GREEN+"Attack was successfu!"+Style.RESET_ALL)
+            print(Fore.GREEN+"Attack was successfull!"+Style.RESET_ALL)
             print(response)
             break
 
@@ -117,12 +117,11 @@ def chat_web_application(args):
 
 # args = {}
 # args["nb_actions"] = "1"
-# args["url"] = "http://10.159.8.21/"
+# args["url"] = "http://10.159.8.36/"
 # args["username"] = "usera"
 # args["email"] = "usera@company.com"
 # args["password"] = "user123"
 # args["receivers"] = ["user1"]
 # args["proxy"] = ""
-
 # chat_web_application_signup(args)
 # chat_web_application(args)

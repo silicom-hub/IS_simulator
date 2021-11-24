@@ -3,8 +3,6 @@ import json
 import getpass
 import socket
 from colorama import Fore, Style
-
-
 from sim_web import dvwa, dvwa_attack, chat_web_application_signup, chat_web_application
 from sim_mail import mail_cycle
 from sim_smb import smb_cycle
