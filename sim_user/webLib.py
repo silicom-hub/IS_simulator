@@ -5,7 +5,7 @@ import pprint
 import random
 import getpass
 from colorama import Style, Fore
-from bs4 import BeautifulSoup as BeautifulSoup
+# from bs4 import BeautifulSoup as BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
@@ -100,7 +100,7 @@ def dvwa_command_injection(driver,base_url,ip):
         action.click().pause(5)
         action.perform()
 
-        soup = BeautifulSoup(driver.page_source, features='html.parser')
+        # soup = BeautifulSoup(driver.page_source, features='html.parser')
         # print(soup.find_all('pre'))
         return 0
     except:
@@ -115,7 +115,7 @@ def dvwa_xss_reflected(driver, base_url, name):
         action.send_keys(getpass.getuser()).pause(1)
         action.send_keys(Keys.ENTER).pause(1)
         action.perform()
-        soup = BeautifulSoup(driver.page_source, features='html.parser')
+        # soup = BeautifulSoup(driver.page_source, features='html.parser')
         # print(soup.find_all('pre'))
         return 0
     except:
@@ -278,3 +278,51 @@ def chat_web_application_logout(driver, verbose=True):
             print( Fore.RED+ " => chat_web_application_logout can't log out!    -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL )
     except:
         print( Fore.RED+ " => chat_web_application_logout failed!    -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL )
+
+################################ Gnu social ###################################
+
+def gnu_social_register_account(driver, base_url, nickname, password, email, fullname, bio, location, verbose=True):
+    try:
+        driver.get(base_url+"index.php/main/register")
+        action = ActionChains(driver)
+
+        action.move_to_element(driver.find_element_by_id("nickname")).pause(1)
+        action.click().pause(1)
+        action.send_keys(nickname).pause(1)
+
+        action.move_to_element(driver.find_element_by_id("password")).pause(1)
+        action.click().pause(1)
+        action.send_keys(password).pause(1)
+
+        action.move_to_element(driver.find_element_by_id("confirm")).pause(1)
+        action.click().pause(1)
+        action.send_keys(password).pause(1)
+
+        action.move_to_element(driver.find_element_by_id("email")).pause(1)
+        action.click().pause(1)
+        action.send_keys(email).pause(1)
+
+        action.move_to_element(driver.find_element_by_id("fullname")).pause(1)
+        action.click().pause(1)
+        action.send_keys(fullname).pause(1)
+
+        action.move_to_element(driver.find_element_by_id("bio")).pause(1)
+        action.click().pause(1)
+        action.send_keys(bio).pause(1)
+
+        action.move_to_element(driver.find_element_by_id("location")).pause(1)
+        action.click().pause(1)
+        action.send_keys(location).pause(1)
+
+    except:
+        pass
+
+def gnu_social_login(driver, verbose=True):
+    pass
+
+def gnu_social_send_status(driver):
+    pass
+
+def gnu_social_read_timeline(driver):
+    pass
+

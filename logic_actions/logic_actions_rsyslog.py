@@ -1,11 +1,13 @@
+"""This file contain all functions about log configuration """
 from colorama import Fore, Style
-from .logic_actions_utils import upload_file, change_fileorfolder_user_owner, restart_service
+from .logic_actions_utils import execute_command, upload_file, change_fileorfolder_user_owner, restart_service
 
-def rsyslog_client(client, instance, arg, verbose=True):
+def rsyslog_client(instance, arg, verbose=True):
+    """ Configure rsyslog client to send log to log server on the remote instance """
     facility = 1
-    instance.execute(["sed","-i","/imklog/s/^/#/","/etc/rsyslog.conf"])
+    execute_command(instance, {"command":["sed", "-i", "/imklog/s/^/#/", "/etc/rsyslog.conf"], "expected_exit_code":"0"}, verbose=False)
     for log in arg["log_files"]:
-        file_conf = open("simulation/workstations/"+instance.name+"/"+log+".conf","w")
+        file_conf = open("simulation/workstations/"+instance.name+"/"+log+".conf", "w", encoding="utf-8")
         if log == "authentication":
             file_conf.write("auth,authpriv.* @"+arg["ip_log_server"]+":5001\n")
         if log == "mail":
@@ -40,11 +42,18 @@ def rsyslog_client(client, instance, arg, verbose=True):
             file_conf.write("module(load=\"imfile\" PollingInterval=\"10\") \n")
             file_conf.write("input(type=\"imfile\" File=\"/var/log/samba/samba.log\" Tag=\"samba\" Severity=\"info\" Facility=\"local"+str(facility)+"\") \n")
             file_conf.write("local"+str(facility)+".* @"+arg["ip_log_server"]+":5001 \n")
+        if log == "motion":
+            file_conf.write("module(load=\"imfile\" PollingInterval=\"10\") \n")
+            file_conf.write("input(type=\"imfile\" File=\"/var/log/motion/motion.log\" Tag=\"motion\" Severity=\"info\" Facility=\"local"+str(facility)+"\") \n")
+            file_conf.write("local"+str(facility)+".* @"+arg["ip_log_server"]+":5001 \n")
 
-        
         file_conf.close()
-        upload_file(client,instance,{"instance_path":"/etc/rsyslog.d/"+log+".conf","host_manager_path":"simulation/workstations/"+instance.name+"/"+log+".conf"}, verbose=False)
-
-    change_fileorfolder_user_owner(client,instance,{"new_owner":"syslog","file_path":"/etc/rsyslog.d/"+log+".conf"}, verbose=False)
-    # instance.execute(["chmod","-R","777","/etc/rsyslog.d"])
-    restart_service(client,instance,{"service":"rsyslog"}, verbose=False)
+        if upload_file(instance, {"instance_path":"/etc/rsyslog.d/"+log+".conf", "host_manager_path":"simulation/workstations/"+instance.name+"/"+log+".conf"}, verbose=False) == 1:
+            return 1
+        if change_fileorfolder_user_owner(instance, {"new_owner":"syslog", "file_path":"/etc/rsyslog.d/"+log+".conf"}, verbose=False) == 1:
+            return 1
+    if restart_service(instance, {"service":"rsyslog"}, verbose=False) == 1:
+        return 1
+    if verbose:
+        print(Fore.GREEN+"      Install and configure rsyslog client successfully!"+Style.RESET_ALL)
+    return 0
