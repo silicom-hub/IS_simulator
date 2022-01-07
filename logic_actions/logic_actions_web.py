@@ -76,8 +76,6 @@ def enable_ssl(instance, arg, verbose=True):
         print(Fore.RED + "      SSL mod failed!" + Style.RESET_ALL)
         return 1
 
-    execute_command(instance, {"command":["a2dissite", "default"], "expected_exit_code":"0"}, verbose=False)
-
     execute_command(instance, {"command":["a2ensite", "default-ssl"], "expected_exit_code":"0"}, verbose=False)
     result = restart_service(instance, {"service":"apache2"}, verbose=False)
     result = execute_command(instance, {"command":["a2ensite", "default-ssl"], "expected_exit_code":"0"}, verbose=False)
@@ -166,7 +164,6 @@ def install_gnu_social_network(instance, arg, verbose=True):
 
     execute_command(instance, {"command":["rm", "-R", "/var/www/html/"], "expected_exit_code":"0"}, verbose=False)
     # git_clone(instance, {"branch":"1.2.x", "repository":"https://notabug.org/diogo/gnu-social.git", "instance_path":"/var/www/html/"}, verbose=False)
-    # execute_command(instance, {"command":["wget", "-L", "https://notabug.org/diogo/gnu-social/archive/1.2.x.tar.gz", "-P", "/var/www/"], "expected_exit_code":"0"}, verbose=False)
     wget(instance, {"url":"https://notabug.org/diogo/gnu-social/archive/1.2.x.tar.gz", "local_path":"/var/www/"}, verbose=False)
     execute_command(instance, {"command":["tar", "-xf", "/var/www/1.2.x.tar.gz", "-C", "/var/www/"], "expected_exit_code":"0"}, verbose=False)
     execute_command(instance, {"command":["mv", "/var/www/gnu-social", "/var/www/html/"], "expected_exit_code":"0"}, verbose=False)
@@ -185,6 +182,19 @@ def install_gnu_social_network(instance, arg, verbose=True):
     restart_service(instance, {"service":"mysql"}, verbose=False)
 
     create_execute_command_remote_bash(instance, {"script_name":"gnu_social_configuration_file.sh", "commands":["curl -X POST -H 'Content-Type: application/x-www-form-urlencoded' -d 'sitename="+arg["domain_name"]+"' -d 'ssl=never' -d 'host=127.0.0.1' -d 'dbtype=mysql' -d 'database=social_app' -d 'dbusername=socialuser' -d 'dbpassword=social123' -d 'admin_nickname=admin' -d 'admin_password=admin123' -d 'admin_password2=admin123' -d 'admin_email=admin@yourdomain.com' -d 'site_profile=public' -d 'submit=Submit' http://127.0.0.1/install.php \n"], "delete":"false"}, verbose=False)
+    config_php = open("simulation/workstations/"+instance.name+"/config.php", "w")
+    config_php.write("<?php \n")
+    config_php.write("if (!defined('GNUSOCIAL')) { exit(1); } \n")
+    config_php.write("$config['site']['name'] = '"+arg["domain_name"]+"'; \n")
+    config_php.write("$config['site']['path'] = ''; \n")
+    config_php.write("$config['site']['server'] = '"+arg["server_ip"]+"'; \n")
+    config_php.write("$config['site']['ssl'] = 'never'; \n")
+    config_php.write("$config['db']['database'] = 'mysqli://socialuser:social123@127.0.0.1/social_app'; \n")
+    config_php.write("$config['db']['type'] = 'mysql'; \n")
+    config_php.write("$config['site']['profile'] = 'public'; \n")
+    config_php.close()
+    if upload_file(instance, {"instance_path":"/var/www/html/config.php", "host_manager_path":"simulation/workstations/"+instance.name+"/config.php"}, verbose=False) == 1:
+        return 1
 
 
 # {"name":"install_gnu_social_network", "args": {"username":"user1","password":"user123"} },

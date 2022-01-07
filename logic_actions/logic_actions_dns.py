@@ -27,9 +27,29 @@ def dns_installation(instance, arg, verbose=True):
     """ Install bind9 package on the remote instance and configure name resolution for his own domain name """
     if install(instance, {"module":"bind9"}, verbose=False) == 1:
         return 1
-    if dns_resolve_name(instance, {"domain_name":arg["domain_name"], "ip_resolution":arg["ip_resolution"], "mail":"", "alias":""}, verbose=False) == 1:
+    # execute_command(instance, {"command":["truncate", "-s", "0", "/etc/bind/db.root"], "expected_exit_code":"0"}, verbose=False)
+    if dns_resolve_name(instance, {"domain_name":arg["ns"], "ns":arg["ns"], "ip_resolution":arg["ip_resolution"], "mail":"", "alias":""}, verbose=False) == 1:
         return 1
     execute_command(instance, {"command":["chmod", "+r", "/etc/bind/named.conf.local"], "expected_exit_code":"0"}, verbose=False)
+    
+    options = open("simulation/workstations/"+instance.name+"/named.conf.options", "w")
+    options.write("options { \n")
+    options.write("   directory \"/var/cache/bind\"; \n")
+    options.write("   dnssec-validation no; \n")
+    options.write("   auth-nxdomain no;    # conform to RFC1035 \n")
+    options.write("   listen-on-v6 { any; }; \n")
+    if arg["forwarders"] != []:
+        options.write("   recursion yes; \n")
+        options.write("   forward only; \n")
+        options.write("   forwarders { ")
+        for forwarder in arg["forwarders"]:
+            options.write(forwarder+"; ")
+        options.write(" }; \n")
+    options.write("}; \n")
+    options.close()
+    if upload_file(instance, {"instance_path":"/etc/bind/named.conf.options", "host_manager_path":"simulation/workstations/"+instance.name+"/named.conf.options"}, verbose=False) == 1:
+        return 1
+
     if restart_service(instance, {"service":"bind9"}, verbose=False) == 1:
         return 1
     if verbose:
@@ -42,7 +62,7 @@ def dns_resolve_name(instance, arg, verbose=True):
     # db config
     resolution_file = open("simulation/workstations/"+instance.name+"/db."+arg["domain_name"], "w")
     resolution_file.write("$TTL       604800\n")
-    resolution_file.write("@       IN      SOA     "+ arg["domain_name"] +". root."+ arg["domain_name"] +". (\n")
+    resolution_file.write("@       IN      SOA     "+ arg["ns"] +". admin."+ arg["domain_name"] +". (\n")
     resolution_file.write("                                 3       ;     Serial\n")
     resolution_file.write("                            604800       ;     Refresh\n")
     resolution_file.write("                             86400       ;     Retry\n")
@@ -52,7 +72,7 @@ def dns_resolve_name(instance, arg, verbose=True):
     resolution_file.write(";\n")
     resolution_file.write("; name servers - NS records\n")
 
-    resolution_file.write("@        IN      NS      "+ arg["domain_name"]+".\n")
+    resolution_file.write("@        IN      NS      "+ arg["ns"]+".\n")
     if arg["alias"] != [""]:
         for alias in arg["alias"]:
             resolution_file.write(alias+"."+arg["domain_name"]+".   IN      CNAME       "+arg["domain_name"]+".\n")
@@ -68,12 +88,11 @@ def dns_resolve_name(instance, arg, verbose=True):
     if upload_file(instance, {"instance_path":"/etc/bind/db."+arg["domain_name"], "host_manager_path":"simulation/workstations/"+instance.name+"/db."+arg["domain_name"]}, verbose=False) == 1:
         return 1
     execute_command(instance, {"command":["chmod", "+r", "/etc/bind/db."+arg["domain_name"]], "expected_exit_code":"0"}, verbose=False)
-    # instance.execute(["chmod", "+r", "/etc/bind/db."+arg["domain_name"]])
 
     #db.inverse
     resolution_inverse_file = open("simulation/workstations/"+instance.name+"/db."+inverse_ip(arg["ip_resolution"])+".in-addr.arpa", "w")
     resolution_inverse_file.write("$TTL       604800\n")
-    resolution_inverse_file.write("@       IN      SOA     "+ arg["domain_name"] +". root."+ arg["domain_name"] +". (\n")
+    resolution_inverse_file.write("@       IN      SOA     "+ arg["ns"] +". admin."+ arg["domain_name"] +". (\n")
     resolution_inverse_file.write("                                 3       ;     Serial\n")
     resolution_inverse_file.write("                            604800       ;     Refresh\n")
     resolution_inverse_file.write("                             86400       ;     Retry\n")
@@ -81,6 +100,9 @@ def dns_resolve_name(instance, arg, verbose=True):
     resolution_inverse_file.write("                            604800   )   ;     Negative Cache TTL\n")
     resolution_inverse_file.write("@        IN      NS      localhost.\n")
     resolution_inverse_file.write("         IN      PTR     "+arg["domain_name"]+".\n")
+    if arg["alias"] != [""]:
+        for alias in arg["alias"]:
+            resolution_inverse_file.write("         IN      PTR     "+alias+"."+arg["domain_name"]+".\n")
     resolution_inverse_file.close()
     if upload_file(instance, {"instance_path":"/etc/bind/db."+inverse_ip(arg["ip_resolution"])+".in-addr.arpa", "host_manager_path":"simulation/workstations/"+instance.name+"/db."+inverse_ip(arg["ip_resolution"])+".in-addr.arpa"}, verbose=False) == 1:
         return 1

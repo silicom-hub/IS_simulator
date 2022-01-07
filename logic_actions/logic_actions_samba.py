@@ -80,3 +80,5 @@ def add_share_file(instance, args, verbose=True):
 # {"name":"add_shareFile", "args": {"share_file_name":"shareFile","comment":"Fichier partage silicom!",
 #                                     "private":"true","browseable":"yes","writable":"yes","valid_users":["user","hacker"],
 #                                     "users":[["hacker","hacker123"],["user","user123"]]} }
+
+# {"name":"smb_cycle","rep":"1","begin":"0","args":{"nb_actions":"10","username":"aquemat","password":"aquemat123","workstation_name":"workstation1","server_name":"samba.silicom.com","server_ip":"10.122.1.17","service_name":"shareFile"}}

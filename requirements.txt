@@ -1,3 +1,5 @@
-colorama==0.4.3
-pylxd==2.3.0
-pyOpenSSL==21.0.0
+opencv-python
+colorama
+pylxd
+pyopenssl
+graphviz

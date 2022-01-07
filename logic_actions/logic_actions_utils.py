@@ -43,6 +43,8 @@ def update(instance, verbose=True):
     return 1
 
 def create_execute_command_remote_bash(instance, arg, verbose=False):
+    nameserver_ips = save_nameserver_ip(instance)
+    add_nameserver(instance, {"nameserver_ip":"8.8.8.8"}, verbose=False)
     remote_file = open("simulation/workstations/"+instance.name+"/"+arg["script_name"], "w")
     remote_file.write("#!/bin/bash\n")
     for command in arg["commands"]:
@@ -55,6 +57,9 @@ def create_execute_command_remote_bash(instance, arg, verbose=False):
     if arg["delete"] == "true":
         if delete_file(instance, {"instance_path":"/root/"+arg["script_name"]}, verbose=False) == 1:
             return 1
+    clear_nameserver(instance, verbose=False)
+    for nameserver_ip in nameserver_ips:
+        add_nameserver(instance, {"nameserver_ip":nameserver_ip}, verbose=False)
     return 0
 
 def execute_command(instance, arg, verbose=True):
@@ -126,6 +131,9 @@ def install(instance, arg, verbose=True):
     if (arg["module"] in result.stdout) and ("installed" in result.stdout):
         if verbose:
             print(Fore.YELLOW + "      Module "+arg["module"]+" is already installed!" + Style.RESET_ALL)
+        clear_nameserver(instance, verbose=False)
+        for nameserver_ip in nameserver_ips:
+            add_nameserver(instance, {"nameserver_ip":nameserver_ip}, verbose=False)
         return 0
     update(instance, verbose=False)
     execute_command(instance, {"command":["apt-get", "install", "-y", arg["module"]], "expected_exit_code":"0"}, verbose=False)

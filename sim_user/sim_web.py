@@ -8,7 +8,7 @@ import datetime
 import threading
 from colorama import Fore, Style
 from essential_generators import DocumentGenerator
-from webLib import create_driver, dvwa_login, dvwa_command_injection, dvwa_xss_reflected, move_2_link, change_security, chat_web_application_login, chat_web_application_signup_, chat_web_application_search_user, chat_web_application_send_msg, chat_web_application_logout
+from webLib import create_driver, dvwa_login, dvwa_command_injection, dvwa_xss_reflected, move_2_link, change_security, chat_web_application_login, chat_web_application_signup_, chat_web_application_search_user, chat_web_application_send_msg, chat_web_application_logout, gnu_social_register_account, gnu_social_login, gnu_social_send_status, gnu_social_read_timeline
 
 def dvwa(args):
     base_url = args["url"]
@@ -21,16 +21,14 @@ def dvwa(args):
 
     dvwa_login(driver, base_url, username, password)
     for i in range(int(args["nb_actions"])):
-        action = random.choices(actions, weights=[1,1,8])
+        action = random.choices(actions, weights=[5,5,5])
         time.sleep(random.randint(2,20))
         if action == ["dvwa_command_injection"]:
-            print(" => "+str(action[0])+" -- "+time.strftime("%H:%M:%S", time.localtime()))
+            change_security(driver, base_url)
             dvwa_command_injection(driver, base_url, "8.8.8.8")
         elif action == ["dvwa_xss_reflected"]:
-            print(" => "+str(action[0])+"     -- "+time.strftime("%H:%M:%S", time.localtime()))
             dvwa_xss_reflected(driver, base_url, getpass.getuser())
         elif action == ["move_2_link"]:
-            print(" => "+str(action[0])+"            -- "+time.strftime("%H:%M:%S", time.localtime()))
             move_2_link(driver)
 
     driver.close()
@@ -104,7 +102,7 @@ def chat_web_application(args):
     driver = create_driver(proxy=args["proxy"])
     driver.implicitly_wait(10)
 
-    if chat_web_application_login(driver, base_url, username, password) == 0:
+    if chat_web_application_login(driver, base_url, username, password, verbose=False) == 0:
         for i in range(int(args["nb_actions"])):
             receiver = random.choice(receivers)
             if chat_web_application_search_user(driver, receiver, verbose=False) == 0:
@@ -115,13 +113,50 @@ def chat_web_application(args):
     driver.close()
     driver.quit()
 
+def gnu_social_signup(args):
+    url = args["url"]
+    nickname = args["nickname"]
+    password = args["password"]
+    email = args["email"]
+    fullname = args["fullname"]
+    bio = args["bio"]
+    location = args["location"]
+
+    driver = create_driver(proxy=args["proxy"])
+    driver.implicitly_wait(10)
+
+    gnu_social_register_account(driver, url, nickname, password, email, fullname, bio, location, verbose=True)
+
+    time.sleep(4)
+    driver.close()
+    driver.quit()
+
+def gnu_social(args):
+    url = args["url"]
+    nickname = args["nickname"]
+    password = args["password"]
+
+    driver = create_driver(proxy=args["proxy"])
+    driver.implicitly_wait(10)
+
+    gen = DocumentGenerator()
+
+    if gnu_social_login(driver, url, nickname, password, verbose=False) == 0:
+        gnu_social_send_status(driver, url, gen.sentence())
+    # gnu_social_read_timeline(driver, url)
+    time.sleep(4)
+    driver.close()
+    driver.quit()
+
 # args = {}
 # args["nb_actions"] = "1"
-# args["url"] = "http://10.159.8.36/"
-# args["username"] = "usera"
-# args["email"] = "usera@company.com"
-# args["password"] = "user123"
-# args["receivers"] = ["user1"]
+# args["url"] = "http://10.159.8.15/"
+# args["nickname"] = "test"
+# args["password"] = "test123"
+# args["email"] = "test@company.com"
+# args["fullname"] = "Mr Test"
+# args["bio"] = "Bonjour je suis Mr Test"
+# args["location"] = "Paris"
 # args["proxy"] = ""
-# chat_web_application_signup(args)
-# chat_web_application(args)
+
+# gnu_social(args)
