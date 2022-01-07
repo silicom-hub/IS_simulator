@@ -5,7 +5,7 @@ import pprint
 import random
 import getpass
 from colorama import Style, Fore
-# from bs4 import BeautifulSoup as BeautifulSoup
+from bs4 import BeautifulSoup as BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
@@ -46,50 +46,67 @@ def get_current_page(driver=None, url=None):
 
     return driver.page_source
 
-def move_2_link(driver):
+def move_2_link(driver, verbose=True):
     try:
-        soup = BeautifulSoup(get_current_page(driver), features='html.parser')
+        soup = BeautifulSoup(driver.page_source, features='html.parser')
         links = soup.find_all(href=True)
         link = random.choice(links)
         
+        if verbose:
+            print(Fore.GREEN+" ==> [move_2_link] Old url: "+driver.current_url, end="")
         action = ActionChains(driver).move_to_element(driver.find_element_by_link_text(link.string)).pause(1)
         action.click().pause(1)
         action.perform()
-        # print(driver.current_url)
+        time.sleep(2)
+        if verbose:
+            print(" --> New url: "+driver.current_url+"-- "+time.strftime("%H:%M:%S", time.localtime())+Style.RESET_ALL)
+        return 0
     except:
-        # print(driver.current_url)
-        pass
+        print(Fore.RED+" ==> [move_2_link] failed!  -- "+time.strftime("%H:%M:%S", time.localtime())+Style.RESET_ALL)
+        return 1
 
 ################################# DVWA #################################
 
-def dvwa_login(driver, base_url, username, password):
+def dvwa_login_(driver, base_url, username, password):
+    driver.get(base_url+"login.php")
+    action = ActionChains(driver)
+
+    action.move_to_element(driver.find_element_by_name("username")).pause(1)
+    action.click().pause(1)
+    action.send_keys(username).pause(1)
+
+    action.move_to_element(driver.find_element_by_name("password")).pause(1)
+    action.click().pause(1)
+    action.send_keys(password).pause(1)
+
+    action.send_keys(Keys.ENTER).pause(1)
+    action.perform()
+    time.sleep(2)
+    driver.get(driver.current_url)
+    time.sleep(2)
+
+def dvwa_login(driver, base_url, username, password, verbose=True):
     try:
-        driver.get(base_url+"login.php")
-        action = ActionChains(driver)
-
-        action.move_to_element(driver.find_element_by_name("username")).pause(1)
-        action.click().pause(1)
-        action.send_keys(username).pause(1)
-
-        action.move_to_element(driver.find_element_by_name("password")).pause(1)
-        action.click().pause(1)
-        action.send_keys(password).pause(1)
-
-        action.send_keys(Keys.ENTER).pause(1)
-        action.perform()
-        time.sleep(2)
-        driver.get(driver.current_url)
-        time.sleep(2)
+        dvwa_login_(driver, base_url, username, password)
         if driver.current_url == base_url+"setup.php":
-            db = driver.find_element_by_name("create_db")
-            time.sleep(2)
-            db.click()
-        return 0
-
+            driver.find_element_by_name("create_db").location_once_scrolled_into_view
+            action = ActionChains(driver)
+            action.move_to_element(driver.find_element_by_name("create_db")).pause(1)
+            action.click().pause(1)
+            action.send_keys(Keys.ENTER).pause(1)
+            action.perform()
+            dvwa_login_(driver, base_url, username, password)
+        if "index.php" in driver.current_url:
+            if verbose:
+                print(Fore.GREEN+ " ==> [dvwa_login] "+base_url+" was succesfull!    -- "+ time.strftime("%H:%M:%S", time.localtime())+ Style.RESET_ALL)
+            return 0
+        print(Fore.RED+ " ==> [dvwa_login] "+base_url+" failed! #current_url: "+driver.current_url+"#   -- "+ time.strftime("%H:%M:%S", time.localtime())+ Style.RESET_ALL)
+        return 1
     except:
+        print(Fore.RED+ " ==> [dvwa_login] "+base_url+" failed!  -- "+ time.strftime("%H:%M:%S", time.localtime())+ Style.RESET_ALL)
         return 1
 
-def dvwa_command_injection(driver,base_url,ip):
+def dvwa_command_injection(driver,base_url,ip, verbose=True):
     driver.get(base_url+"vulnerabilities/exec")
     try:
         action = ActionChains(driver)
@@ -100,13 +117,17 @@ def dvwa_command_injection(driver,base_url,ip):
         action.click().pause(5)
         action.perform()
 
-        # soup = BeautifulSoup(driver.page_source, features='html.parser')
-        # print(soup.find_all('pre'))
-        return 0
+        if 1 < len(driver.find_element_by_tag_name("pre").text):
+            if verbose:
+                print(Fore.GREEN+ " ==> [dvwa_command_injection] was succesfull!  ["+driver.find_element_by_tag_name("pre").text[:10]+" ... "+driver.find_element_by_tag_name("pre").text[-10:]+"]  -- "+ time.strftime("%H:%M:%S", time.localtime())+ Style.RESET_ALL)
+            return 0
+        print(Fore.RED+ " ==> [dvwa_command_injection] failed! ["+driver.find_element_by_tag_name("pre").text+"] -- "+ time.strftime("%H:%M:%S", time.localtime())+ Style.RESET_ALL)
+        return 1
     except:
+        print(Fore.RED+ " ==> [dvwa_command_injection] failed!  -- "+ time.strftime("%H:%M:%S", time.localtime())+ Style.RESET_ALL)
         return 1
 
-def dvwa_xss_reflected(driver, base_url, name):
+def dvwa_xss_reflected(driver, base_url, name, verbose=True):
     driver.get(base_url+"vulnerabilities/xss_r")
     try:
         action = ActionChains(driver)
@@ -115,10 +136,16 @@ def dvwa_xss_reflected(driver, base_url, name):
         action.send_keys(getpass.getuser()).pause(1)
         action.send_keys(Keys.ENTER).pause(1)
         action.perform()
-        # soup = BeautifulSoup(driver.page_source, features='html.parser')
-        # print(soup.find_all('pre'))
-        return 0
+
+        if name in driver.find_element_by_tag_name("pre").text:
+            if verbose:
+                print(Fore.GREEN+ " ==> [dvwa_xss_reflected] was succesfull!  #"+driver.find_element_by_tag_name("pre").text+"#  -- "+ time.strftime("%H:%M:%S", time.localtime())+ Style.RESET_ALL)
+            return 0
+        else:
+            print(Fore.RED+ " ==> [dvwa_xss_reflected] failed!  #"+driver.find_element_by_tag_name("pre").text+"#  -- "+ time.strftime("%H:%M:%S", time.localtime())+ Style.RESET_ALL)
+            return 1
     except:
+        print(Fore.RED+ " ==> [dvwa_xss_reflected] failed!  -- "+ time.strftime("%H:%M:%S", time.localtime())+ Style.RESET_ALL)
         return 1
 
 def change_security(driver, base_url, difficulty=1):
@@ -160,13 +187,13 @@ def chat_web_application_login(driver, base_url, username, password, verbose=Tru
 
         if "chat.php" in driver.current_url:
             if verbose:
-                print(Fore.GREEN+ " => chat_web_application_login [login: "+username+"] was succesfull!    -- "+ time.strftime("%H:%M:%S", time.localtime())+ Style.RESET_ALL)
+                print(Fore.GREEN+ " ==> [chat_web_application_login] #login: "+username+"# was succesfull!    -- "+ time.strftime("%H:%M:%S", time.localtime())+ Style.RESET_ALL)
             return 0
         else:
-            print(Fore.RED+ " => chat_web_application_login [login: "+username+"] user can't log to the service!    -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL)
+            print(Fore.RED+ " ==> [chat_web_application_login] #login: "+username+"# user can't log to the service!    -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL)
             return 1
     except:
-        print(Fore.RED+ " => chat_web_application_login [login: "+username+"] failed!    -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL)
+        print(Fore.RED+ " ==> [chat_web_application_login] #login: "+username+"# failed!    -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL)
         return 1
 
 def chat_web_application_signup_(driver, base_url, username, email, password, verbose=True):
@@ -201,13 +228,13 @@ def chat_web_application_signup_(driver, base_url, username, email, password, ve
         if chat_web_application_login(driver, base_url, username, password, verbose=False) == 0:
             chat_web_application_logout(driver, verbose=False)
             if verbose:
-                print( Fore.GREEN+ " => chat_web_application_signup_ [signup-name: "+username+"] was succesfull!    -- "+ time.strftime("%H:%M:%S", time.localtime())+ Style.RESET_ALL )
+                print( Fore.GREEN+ " ==> [chat_web_application_signup_] #signup-name: "+username+"# was succesfull!    -- "+ time.strftime("%H:%M:%S", time.localtime())+ Style.RESET_ALL )
             return 0
         else:
-            print( Fore.RED+ " => chat_web_application_signup_ [signup-name: "+username+"] can't sign up!    -- "+ time.strftime("%H:%M:%S", time.localtime())+ Style.RESET_ALL )
+            print( Fore.RED+ " ==> [chat_web_application_signup_] #signup-name: "+username+"# can't sign up!    -- "+ time.strftime("%H:%M:%S", time.localtime())+ Style.RESET_ALL )
             return 1
     except:
-        print( Fore.RED+ " => chat_web_application_signup_ [signup-name: "+username+"] failed!    -- "+ time.strftime("%H:%M:%S", time.localtime())+ Style.RESET_ALL )
+        print( Fore.RED+ " ==> [chat_web_application_signup_] #signup-name: "+username+"# failed!    -- "+ time.strftime("%H:%M:%S", time.localtime())+ Style.RESET_ALL )
         return 1
 
 def chat_web_application_search_user(driver, username, verbose=True):
@@ -226,19 +253,18 @@ def chat_web_application_search_user(driver, username, verbose=True):
 
         if username == driver.find_element_by_xpath("/html/body/main/div/ul[@id='contacts']/li/div[@class='pelement3']/h1").text:
             if verbose:
-                print(Fore.GREEN+ " => chat_web_application_search_user [username: "+username+"] was successfull!   -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL)
+                print(Fore.GREEN+ " ==> [chat_web_application_search_user] #username: "+username+"# was successfull!   -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL)
             return 0
         else:
-            if verbose:
-                print(Fore.RED+ " => chat_web_application_search_user [username: "+username+"] can't find user: "+username+" !    -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL)
+            print(Fore.RED+ " ==> [chat_web_application_search_user] #username: "+username+"# can't find user: "+username+" !    -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL)
             return 1
     except:
-        if verbose:
-            print(Fore.RED+ " => chat_web_application_search_user [username: "+username+"] failed!    -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL)
+        print(Fore.RED+ " ==> [chat_web_application_search_user] #username: "+username+"# failed!    -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL)
         return 1
 
-def chat_web_application_send_msg(driver,username,msg, verbose=True):
+def chat_web_application_send_msg(driver, username, msg, verbose=True):
     try:
+        msg = msg.strip()
         action = ActionChains(driver)
         contacts = driver.find_elements_by_xpath("/html/body/main/div/ul[@id='contacts']/*")
         for contact in contacts:
@@ -254,15 +280,15 @@ def chat_web_application_send_msg(driver,username,msg, verbose=True):
         action.click().pause(5)
         action.perform()
 
-        time.sleep(3)
+        time.sleep(4)
         if msg in driver.find_element_by_id("box4").text:
             if verbose:
-                print(Fore.GREEN+ " => chat_web_application_send_msg [username :"+username+"] was succesfull!     -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL)
-        else:
-            print(Fore.RED+ " => chat_web_application_send_msg [username :"+username+"] can't send message!    -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL)
-            return 1
+                print(Fore.GREEN+ " ==> [chat_web_application_send_msg] #receiver :"+username+"# was succesfull!     -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL)
+            return 0
+        print(Fore.RED+ " ==> [chat_web_application_send_msg] can't send message!    -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL)
+        return 1
     except:
-        print(Fore.RED+ " => chat_web_application_send_msg [username :"+username+"] failed!    -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL)
+        print(Fore.RED+ " ==> [chat_web_application_send_msg] #username :"+username+"# failed!    -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL)
         return 1
 
 def chat_web_application_logout(driver, verbose=True):
@@ -273,56 +299,123 @@ def chat_web_application_logout(driver, verbose=True):
         action.perform()
         if ("index.php" in driver.current_url):
             if verbose:
-                print( Fore.GREEN+ " => chat_web_application_logout was succefull!    -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL )
+                print( Fore.GREEN+ " ==> [chat_web_application_logout] was succefull!    -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL )
         else:
-            print( Fore.RED+ " => chat_web_application_logout can't log out!    -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL )
+            print( Fore.RED+ " ==> [chat_web_application_logout] can't log out!    -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL )
     except:
-        print( Fore.RED+ " => chat_web_application_logout failed!    -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL )
+        print( Fore.RED+ " ==> [chat_web_application_logout] failed!    -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL )
 
 ################################ Gnu social ###################################
 
-def gnu_social_register_account(driver, base_url, nickname, password, email, fullname, bio, location, verbose=True):
-    try:
-        driver.get(base_url+"index.php/main/register")
-        action = ActionChains(driver)
+def gnu_social_register_account(driver, url, nickname, password, email, fullname, bio, location, verbose=True):
+    captcha=""
+    driver.get(url+"index.php/main/register")
 
-        action.move_to_element(driver.find_element_by_id("nickname")).pause(1)
-        action.click().pause(1)
-        action.send_keys(nickname).pause(1)
+    action = ActionChains(driver)
+    action.move_to_element(driver.find_element_by_id("nickname")).pause(1)
+    action.click().pause(1)
+    action.send_keys(nickname).pause(1)
 
-        action.move_to_element(driver.find_element_by_id("password")).pause(1)
-        action.click().pause(1)
-        action.send_keys(password).pause(1)
+    action.move_to_element(driver.find_element_by_id("password")).pause(1)
+    action.click().pause(1)
+    action.send_keys(password).pause(1)
 
-        action.move_to_element(driver.find_element_by_id("confirm")).pause(1)
-        action.click().pause(1)
-        action.send_keys(password).pause(1)
+    action.move_to_element(driver.find_element_by_id("confirm")).pause(1)
+    action.click().pause(1)
+    action.send_keys(password).pause(1)
 
-        action.move_to_element(driver.find_element_by_id("email")).pause(1)
-        action.click().pause(1)
-        action.send_keys(email).pause(1)
+    action.move_to_element(driver.find_element_by_id("email")).pause(1)
+    action.click().pause(1)
+    action.send_keys(email).pause(1)
 
-        action.move_to_element(driver.find_element_by_id("fullname")).pause(1)
-        action.click().pause(1)
-        action.send_keys(fullname).pause(1)
+    action.move_to_element(driver.find_element_by_id("fullname")).pause(1)
+    action.click().pause(1)
+    action.send_keys(fullname).pause(1)
+    action.perform()
 
-        action.move_to_element(driver.find_element_by_id("bio")).pause(1)
-        action.click().pause(1)
-        action.send_keys(bio).pause(1)
+    driver.find_element_by_id("bio").location_once_scrolled_into_view
+    for li in driver.find_elements_by_xpath("/html/body/div/div/div/div/div/div/div/form/fieldset/ul/li"):
+        if "Captcha" in li.text:
+            captcha = re.findall(r'"(.*?)"', li.text)[0]
+    action = ActionChains(driver)
+    action.move_to_element(driver.find_element_by_id("bio")).pause(1)
+    action.click().pause(1)
+    action.send_keys(bio).pause(1)
 
-        action.move_to_element(driver.find_element_by_id("location")).pause(1)
-        action.click().pause(1)
-        action.send_keys(location).pause(1)
+    action.move_to_element(driver.find_element_by_id("location")).pause(1)
+    action.click().pause(1)
+    action.send_keys(location).pause(1)
 
-    except:
-        pass
+    action.move_to_element(driver.find_element_by_id("simplecaptcha")).pause(1)
+    action.click().pause(1)
+    action.send_keys(captcha).pause(1)
 
-def gnu_social_login(driver, verbose=True):
-    pass
+    action.move_to_element(driver.find_element_by_id("license")).pause(1)
+    action.click().pause(1)
 
-def gnu_social_send_status(driver):
-    pass
+    action.move_to_element(driver.find_element_by_id("submit")).pause(1)
+    action.click().pause(1)
+    action.perform()
 
-def gnu_social_read_timeline(driver):
-    pass
+    if gnu_social_login(driver, url, nickname, password, verbose=False) == 0:
+        if verbose:
+            print(Fore.GREEN+ " ==> [gnu_social_register_account] #nickname: "+nickname+"# was successfull!   -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL)
+        return 0
+    print(Fore.RED+ " ==> [gnu_social_register_account] failed!   -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL)
+    return 1
 
+def gnu_social_login(driver, url, nickname, password, verbose=True):
+    driver.get(url+"index.php/main/login")
+
+    action = ActionChains(driver)
+    action.move_to_element(driver.find_element_by_id("nickname")).pause(1)
+    action.click().pause(1)
+    action.send_keys(nickname).pause(1)
+
+    action.move_to_element(driver.find_element_by_id("password")).pause(1)
+    action.click().pause(1)
+    action.send_keys(password).pause(1)
+
+    action.move_to_element(driver.find_element_by_id("submit")).pause(1)
+    action.click().pause(1)
+    action.perform()
+
+    if nickname in driver.current_url:
+        if verbose:
+            print(Fore.GREEN+ " ==> [gnu_social_login] #nickname: "+nickname+"# was successfull!   -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL)
+        return 0
+    print(Fore.RED+ " ==> [gnu_social_login] failed!   -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL)
+    return 1
+
+def gnu_social_send_status(driver, url, status="Example status", verbose=True):
+    driver.get(url+"index.php/main/public")
+
+    action = ActionChains(driver)
+    action.move_to_element(driver.find_element_by_name("status_textarea")).pause(1)
+    action.click().pause(1)
+    action.send_keys(status).pause(1)
+
+    action.move_to_element(driver.find_element_by_id("notice_action-submit")).pause(1)
+    action.click().pause(1)
+    action.perform()
+
+def gnu_social_read_timeline(driver, url):
+    status = []
+    driver.get(url+"index.php/main/public")
+
+    i = 0
+    for author in driver.find_elements_by_xpath("/html/body/div/div/div/div/div/div/div/div/ol/li/section"):
+        status.append({"author":author.text})
+        i= i+1
+
+    i = 0
+    for content in driver.find_elements_by_xpath("/html/body/div/div/div/div/div/div/div/div/ol/li/article"):
+        status[i]["content"] = content.text
+        i=i+1
+
+    i = 0
+    for timestamp in driver.find_elements_by_xpath("/html/body/div/div/div/div/div/div/div/div/ol/li/footer/a[@class='timestamp']"):
+        status[i]["timestamp"] = timestamp.text
+        i=i+1
+
+    return status

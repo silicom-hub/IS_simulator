@@ -1,46 +1,141 @@
 {
     "workstations": [
-                    {"hostname":"workstation1","users": [
-                                                        {"name":"aquemat","scenarios":[
-                                                                                       {"name":"smb_cycle","rep":"1","begin":"0","args":{"nb_actions":"10","username":"aquemat","password":"aquemat123","workstation_name":"workstation1","server_name":"samba.silicom.com","server_ip":"10.122.1.17","service_name":"shareFile"}}
-                                                                                        ]
-                                                        }
-                                                        ]
-                    },
-                    {"hostname":"workstation2","users": [
-                                                        {"name":"tgourmelen","scenarios":[
-                                                                                        {"name":"dvwa","rep":"3","begin":"0","args":{"nb_actions":"3","url":"http://dvwa.silicom.com/", "proxy":""}},
-                                                                                        {"name":"mail_cycle","rep":"3","begin":"0","args":{"nb_actions":"4","smtp_server_ip":"10.122.1.12","imap_server_ip":"10.122.1.12","login":"tgourmelen","password":"tgourmelen123","FROM":"tgourmelen@silicom.com","TO":["ogesny@silicom.com","pdelesques@silicom.com","aquemat@silicom.com"],"subject":"","msg":"","attachements":[["file","/tmp/sim_user/hacker.exe"]]}}
-                                                                                        ]
-                                                        }
-                                                        ]
-                    },
-                    {"hostname":"workstation3","users": [
-                                                        {"name":"pdelesques","scenarios":[
-                                                                                        {"name":"dvwa","rep":"3","begin":"0","args":{"nb_actions":"3","url":"http://dvwa.silicom.com/", "proxy":""}},
-                                                                                        {"name":"mail_cycle","rep":"3","begin":"0","args":{"nb_actions":"4","smtp_server_ip":"10.122.1.12","imap_server_ip":"10.122.1.12","login":"pdelesques","password":"pdelesques123","FROM":"pdelesques@silicom.com","TO":["aquemat@silicom.com","ogesny@silicom.com","tgourmelen@silicom.com"],"subject":"","msg":"","attachements":[["file","/tmp/sim_user/hacker.exe"]]}}
-                                                                                        ]
-                                                        }
-                                                        ]
-                    },
-                    {"hostname":"workstation4","users": [
-                                                        {"name":"ogesny","scenarios":[
-                                                                                        {"name":"dvwa","rep":"3","begin":"0","args":{"nb_actions":"3","url":"http://dvwa.silicom.com/", "proxy":""}},
-                                                                                        {"name":"mail_cycle","rep":"3","begin":"0","args":{"nb_actions":"4","smtp_server_ip":"10.122.1.12","imap_server_ip":"10.122.1.12","login":"ogesny","password":"ogesny123","FROM":"ogesny@silicom.com","TO":["aquemat@silicom.com","tgourmelen@silicom.com","pdelesques@silicom.com"],"subject":"","msg":"","attachements":[["file","/tmp/sim_user/hacker.exe"]]}}
-                                                                                        ]
-                                                        }
-                                                        ]
-                    },
                     {"hostname":"hacker","users": [
                                                         {"name":"hacker","scenarios":[
-                                                                                        {"name":"chat_web_application_signup","rep":"0","begin":"0","args":{"url":"http://10.122.0.21/","username":"test", "email":"test@test.com", "password":"test123","proxy":""}},
-                                                                                        {"name":"chat_web_application_signup","rep":"0","begin":"0","args":{"url":"http://10.122.0.21/","username":"test2", "email":"test2@test.com", "password":"test123","proxy":""}},
-                                                                                        {"name":"chat_web_application","rep":"2","begin":"0","args":{"nb_actions":"10","url":"http://10.122.0.21/","username":"test", "receivers":["test2"], "password":"test123","proxy":""}},
-                                                                                        {"name":"dvwa","rep":"3","begin":"0","args":{"nb_actions":"3","url":"http://10.122.1.15/", "proxy":""}},
-                                                                                        {"name":"dvwa_attack","rep":"0","begin":"75","args":{"url":"http://10.122.1.15/"}}                                                                                       
+                                                            {"name":"dvwa","rep":"13","begin":"3","args":{"nb_actions":"7","url":"https://www.mycompany.com/", "proxy":""}},
+                                                            {"name":"dvwa_attack","rep":"0","begin":"4","args":{"url":"https://www.mycompany.com/"}},
+                                                            {"name":"dvwa","rep":"13","begin":"3","args":{"nb_actions":"7","url":"https://www.internationalcorp.com/", "proxy":""}},
+                                                            {"name":"dvwa_attack","rep":"0","begin":"4","args":{"url":"https://www.internationalcorp.com/"}}
+                                                                                        ]
+                                                        }
+                                                        ]
+                    },
+                    {"hostname":"workstationIPN1","users": [
+                                                        {"name":"user1IPN","scenarios":[
+                                                            {"name":"chat_web_application_signup","rep":"0","begin":"0","args":{"url":"https://whatsoup.host.com/","username":"user1IPN", "email":"user1IPN@company.com", "password":"user1IPN123","proxy":""}},
+                                                            {"name":"chat_web_application","rep":"15","begin":"1","args":{"nb_actions":"3","url":"https://whatsoup.host.com/","username":"user1IPN", "receivers":["dsi", "intern", "ceo", "user2IPN", "user3IPN"], "password":"user1IPN123","proxy":""}},
+                                                            {"name":"dvwa","rep":"13","begin":"3","args":{"nb_actions":"7","url":"https://www.mycompany.com/", "proxy":""}},
+                                                            {"name":"mail_cycle","rep":"12","begin":"6","args":{"nb_actions":"3","smtp_server_ip":"jmail.host.com","imap_server_ip":"jmail.host.com","login":"user1IPN@host.com","password":"user1IPN123","FROM":"user1IPN@host.com","TO":["dsi@mycompany.com","ceo@mycompany.com","intern@mycompany.com", "user1IPN@host.com", "user2IPN@host.com", "user3IPN@host.com", "pdg@internationalcorp.com","employee1@internationalcorp.com", "employee2@internationalcorp.com","employee3@internationalcorp.com","employee4@internationalcorp.com","employee5@internationalcorp.com"],"subject":"","msg":"","attachements":[["file","/tmp/sim_user/hacker.exe"]]}}
+                                                                                        ]
+                                                        }
+                                                        ]
+                    },
+                    {"hostname":"workstationIPN2","users": [
+                                                        {"name":"user2IPN","scenarios":[
+                                                            {"name":"chat_web_application_signup","rep":"0","begin":"0","args":{"url":"https://whatsoup.host.com/","username":"user2IPN", "email":"user2IPN@host.com", "password":"user2IPN123","proxy":""}},
+                                                            {"name":"chat_web_application","rep":"10","begin":"1","args":{"nb_actions":"10","url":"https://whatsoup.host.com/","username":"user2IPN", "receivers":["dsi", "intern", "user1IPN", "ceo", "user3IPN"], "password":"user2IPN123","proxy":""}},
+                                                            {"name":"mail_cycle","rep":"3","begin":"4","args":{"nb_actions":"2","smtp_server_ip":"jmail.host.com","imap_server_ip":"jmail.host.com","login":"user2IPN@host.com","password":"user2IPN123","FROM":"user2IPN@host.com","TO":["dsi@mycompany.com","ceo@mycompany.com","intern@mycompany.com", "user1IPN@host.com", "user2IPN@host.com", "user3IPN@host.com", "pdg@internationalcorp.com","employee1@internationalcorp.com", "employee2@internationalcorp.com","employee3@internationalcorp.com","employee4@internationalcorp.com","employee5@internationalcorp.com"],"subject":"","msg":"","attachements":[["file","/tmp/sim_user/hacker.exe"]]}}                                                                                     
+                                                                                        ]
+                                                        }
+                                                        ]
+                    },
+                    {"hostname":"workstationIPN3","users": [
+                                                        {"name":"user3IPN","scenarios":[
+                                                            {"name":"chat_web_application_signup","rep":"0","begin":"0","args":{"url":"https://whatsoup.host.com/","username":"user3IPN", "email":"user3IPN@mycompany.com", "password":"user3IPN123","proxy":""}},
+                                                            {"name":"chat_web_application","rep":"16","begin":"0","args":{"nb_actions":"1","url":"https://whatsoup.host.com/","username":"user3IPN", "receivers":["dsi", "intern", "user1IPN", "user2IPN", "user3IPN"], "password":"user3IPN123","proxy":""}},
+                                                            {"name":"mail_cycle","rep":"7","begin":"0","args":{"nb_actions":"6","smtp_server_ip":"jmail.host.com","imap_server_ip":"jmail.host.com","login":"user3IPN@host.com","password":"user3IPN123","FROM":"user3IPN@host.com","TO":["dsi@mycompany.com","ceo@mycompany.com","intern@mycompany.com", "user1IPN@host.com", "user2IPN@host.com", "user3IPN@host.com", "pdg@internationalcorp.com","employee1@internationalcorp.com", "employee2@internationalcorp.com","employee3@internationalcorp.com","employee4@internationalcorp.com","employee5@internationalcorp.com"],"subject":"","msg":"","attachements":[["file","/tmp/sim_user/hacker.exe"]]}}                                                                                       
+                                                                                        ]
+                                                        }
+                                                        ]
+                    },
+                    {"hostname":"workstation1Mycompany","users": [
+                                                        {"name":"ceo","scenarios":[
+                                                            {"name":"chat_web_application_signup","rep":"0","begin":"0","args":{"url":"https://whatsoup.host.com/","username":"ceo", "email":"ceo@company.com", "password":"ceo123","proxy":""}},
+                                                            {"name":"chat_web_application","rep":"3","begin":"1","args":{"nb_actions":"10","url":"https://whatsoup.host.com/","username":"ceo", "receivers":["dsi", "intern", "user1IPN", "user2IPN", "user3IPN"], "password":"ceo123","proxy":""}},
+                                                            {"name":"dvwa","rep":"3","begin":"0","args":{"nb_actions":"3","url":"https://intranet.mycompany.com/", "proxy":""}},
+                                                            {"name":"smb_cycle","rep":"1","begin":"0","args":{"nb_actions":"3","username":"ceo","password":"ceo123","workstation_name":"workstation1Mycompany","server_name":"sambaMycompany", "server_ip":"192.168.1.17", "service_name":"shareFile"}},
+                                                            {"name":"mail_cycle","rep":"3","begin":"0","args":{"nb_actions":"7","smtp_server_ip":"mail.mycompany.com","imap_server_ip":"mail.mycompany.com","login":"ceo@mycompany.com","password":"ceo123","FROM":"ceo@mycompany.com","TO":["dsi@mycompany.com","ceo@mycompany.com","intern@mycompany.com", "user1IPN@host.com", "user2IPN@host.com", "user3IPN@host.com", "pdg@internationalcorp.com","employee1@internationalcorp.com", "employee2@internationalcorp.com","employee3@internationalcorp.com","employee4@internationalcorp.com","employee5@internationalcorp.com"],"subject":"","msg":"","attachements":[["file","/tmp/sim_user/hacker.exe"]]}}
+                                                                                        ]
+                                                        }
+                                                        ]
+                    },
+                    {"hostname":"workstation2Mycompany","users": [
+                                                        {"name":"dsi","scenarios":[
+                                                            {"name":"chat_web_application_signup","rep":"0","begin":"0","args":{"url":"https://whatsoup.host.com/","username":"dsi", "email":"dsi@mycompany.com", "password":"dsi123","proxy":""}},
+                                                            {"name":"chat_web_application","rep":"6","begin":"1","args":{"nb_actions":"10","url":"https://whatsoup.host.com/","username":"dsi", "receivers":["ceo", "intern", "user1IPN", "user2IPN", "user3IPN"], "password":"dsi123","proxy":""}},
+                                                            {"name":"dvwa","rep":"7","begin":"2","args":{"nb_actions":"6","url":"https://intranet.mycompany.com/", "proxy":""}},
+                                                            {"name":"smb_cycle","rep":"1","begin":"0","args":{"nb_actions":"3","username":"dsi","password":"dsi123","workstation_name":"workstation1Mycompany","server_name":"sambaMycompany", "server_ip":"192.168.1.17", "service_name":"shareFile"}},
+                                                            {"name":"mail_cycle","rep":"3","begin":"0","args":{"nb_actions":"3","smtp_server_ip":"mail.mycompany.com","imap_server_ip":"mail.mycompany.com","login":"dsi@mycompany.com","password":"dsi123","FROM":"dsi@mycompany.com","TO":["dsi@mycompany.com","ceo@mycompany.com","intern@mycompany.com", "user1IPN@host.com", "user2IPN@host.com", "user3IPN@host.com", "pdg@internationalcorp.com","employee1@internationalcorp.com", "employee2@internationalcorp.com","employee3@internationalcorp.com","employee4@internationalcorp.com","employee5@internationalcorp.com"],"subject":"","msg":"","attachements":[["file","/tmp/sim_user/hacker.exe"]]}}
                                                                                     ]
                                                         }
                                                         ]
+                    },
+                    {"hostname":"workstation3Mycompany","users": [
+                                                        {"name":"intern","scenarios":[
+                                                            {"name":"chat_web_application_signup","rep":"0","begin":"0","args":{"url":"https://whatsoup.host.com/","username":"intern", "email":"intern@mycompany.com", "password":"intern123","proxy":""}},
+                                                            {"name":"chat_web_application","rep":"4","begin":"1","args":{"nb_actions":"10","url":"https://whatsoup.host.com/","username":"intern", "receivers":["dsi", "intern", "user1IPN", "user2IPN", "user3IPN"], "password":"intern123","proxy":""}},
+                                                            {"name":"dvwa","rep":"3","begin":"2","args":{"nb_actions":"3","url":"https://intranet.mycompany.com/", "proxy":""}},
+                                                            {"name":"smb_cycle","rep":"1","begin":"0","args":{"nb_actions":"3","username":"intern","password":"intern123","workstation_name":"workstation1Mycompany","server_name":"sambaMycompany", "server_ip":"192.168.1.17", "service_name":"shareFile"}},
+                                                            {"name":"mail_cycle","rep":"3","begin":"0","args":{"nb_actions":"5","smtp_server_ip":"mail.mycompany.com","imap_server_ip":"mail.mycompany.com","login":"intern@mycompany.com","password":"intern123","FROM":"intern@mycompany.com","TO":["dsi@mycompany.com","ceo@mycompany.com","intern@mycompany.com", "user1IPN@host.com", "user2IPN@host.com", "user3IPN@host.com", "pdg@internationalcorp.com","employee1@internationalcorp.com", "employee2@internationalcorp.com","employee3@internationalcorp.com","employee4@internationalcorp.com","employee5@internationalcorp.com"],"subject":"","msg":"","attachements":[["file","/tmp/sim_user/hacker.exe"]]}}
+                                                                                    ]
+                                                        }
+                                                        ]
+                    },
+                    {"hostname":"workstation1Internationalcorp","users": [
+                                                        {"name":"pdg","scenarios":[
+                                                            {"name":"chat_web_application_signup","rep":"0","begin":"0","args":{"url":"https://whatsoup.host.com/","username":"pdg", "email":"pdg@internationalcorp.com", "password":"pdg123","proxy":""}},
+                                                            {"name":"chat_web_application","rep":"4","begin":"1","args":{"nb_actions":"10","url":"https://whatsoup.host.com/","username":"pdg", "receivers":["ceo", "dsi", "intern", "user1IPN", "user2IPN", "user3IPN", "employee1", "employee2","employee3","employee4","employee5"], "password":"pdg123","proxy":""}},
+                                                            {"name":"dvwa","rep":"3","begin":"2","args":{"nb_actions":"3","url":"https://intranet.internationalcorp.com/", "proxy":""}},
+                                                            {"name":"smb_cycle","rep":"1","begin":"0","args":{"nb_actions":"3","username":"pdg","password":"pdg123","workstation_name":"workstation1Internationalcorp","server_name":"sambaInternationalcorp", "server_ip":"192.168.2.17", "service_name":"shareFile"}},
+                                                            {"name":"mail_cycle","rep":"3","begin":"0","args":{"nb_actions":"5","smtp_server_ip":"mail.internationalcorp.com","imap_server_ip":"mail.internationalcorp.com","login":"pdg@internationalcorp.com","password":"pdg123","FROM":"pdg@internationalcorp.com","TO":["dsi@mycompany.com","ceo@mycompany.com","intern@mycompany.com", "user1IPN@host.com", "user2IPN@host.com", "user3IPN@host.com", "pdg@internationalcorp.com","employee1@internationalcorp.com", "employee2@internationalcorp.com","employee3@internationalcorp.com","employee4@internationalcorp.com","employee5@internationalcorp.com"],"subject":"","msg":"","attachements":[["file","/tmp/sim_user/hacker.exe"]]}}
+                                                                                    ]
+                        }
+                        ]
+                    },
+                    {"hostname":"workstation2Internationalcorp","users": [
+                                                        {"name":"employee1","scenarios":[
+                                                            {"name":"chat_web_application_signup","rep":"0","begin":"0","args":{"url":"https://whatsoup.host.com/","username":"employee1", "email":"employee1@internationalcorp.com", "password":"employee1123","proxy":""}},
+                                                            {"name":"chat_web_application","rep":"4","begin":"1","args":{"nb_actions":"10","url":"https://whatsoup.host.com/","username":"employee1", "receivers":["dsi", "intern", "ceo", "user1IPN", "user2IPN", "user3IPN", "pdg", "employee2","employee3","employee4","employee5"], "password":"employee1123","proxy":""}},
+                                                            {"name":"dvwa","rep":"3","begin":"2","args":{"nb_actions":"3","url":"https://intranet.internationalcorp.com/", "proxy":""}},
+                                                            {"name":"smb_cycle","rep":"1","begin":"0","args":{"nb_actions":"3","username":"employee1","password":"employee1123","workstation_name":"workstation2Internationalcorp","server_name":"sambaInternationalcorp", "server_ip":"192.168.2.17", "service_name":"shareFile"}},
+                                                            {"name":"mail_cycle","rep":"3","begin":"0","args":{"nb_actions":"5","smtp_server_ip":"mail.internationalcorp.com","imap_server_ip":"mail.internationalcorp.com","login":"employee2@internationalcorp.com","password":"employee2123","FROM":"employee2@internationalcorp.com","TO":["dsi@mycompany.com","ceo@mycompany.com","intern@mycompany.com", "user1IPN@host.com", "user2IPN@host.com", "user3IPN@host.com", "pdg@internationalcorp.com","employee1@internationalcorp.com", "employee2@internationalcorp.com","employee3@internationalcorp.com","employee4@internationalcorp.com","employee5@internationalcorp.com"],"subject":"","msg":"","attachements":[["file","/tmp/sim_user/hacker.exe"]]}}
+                                                                                    ]
+                        }
+                        ]
+                    },
+                    {"hostname":"workstation3Internationalcorp","users": [
+                                                        {"name":"employee2","scenarios":[
+                                                            {"name":"chat_web_application_signup","rep":"0","begin":"0","args":{"url":"https://whatsoup.host.com/","username":"employee2", "email":"employee2@internationalcorp.com", "password":"employee2123","proxy":""}},
+                                                            {"name":"chat_web_application","rep":"4","begin":"1","args":{"nb_actions":"10","url":"https://whatsoup.host.com/","username":"employee2", "receivers":["dsi", "intern", "ceo", "user1IPN", "user2IPN", "user3IPN", "pdg", "employee1","employee3","employee4","employee5"], "password":"employee2123","proxy":""}},
+                                                            {"name":"dvwa","rep":"3","begin":"2","args":{"nb_actions":"3","url":"https://intranet.internationalcorp.com/", "proxy":""}},
+                                                            {"name":"smb_cycle","rep":"1","begin":"0","args":{"nb_actions":"3","username":"employee2","password":"employee2123","workstation_name":"workstation3Internationalcorp","server_name":"sambaInternationalcorp", "server_ip":"192.168.2.17", "service_name":"shareFile"}},
+                                                            {"name":"mail_cycle","rep":"3","begin":"0","args":{"nb_actions":"5","smtp_server_ip":"mail.internationalcorp.com","imap_server_ip":"mail.internationalcorp.com","login":"employee2@internationalcorp.com","password":"employee2123","FROM":"employee2@internationalcorp.com","TO":["dsi@mycompany.com","ceo@mycompany.com","intern@mycompany.com", "user1IPN@host.com", "user2IPN@host.com", "user3IPN@host.com", "pdg@internationalcorp.com","employee1@internationalcorp.com", "employee2@internationalcorp.com","employee3@internationalcorp.com","employee4@internationalcorp.com","employee5@internationalcorp.com"],"subject":"","msg":"","attachements":[["file","/tmp/sim_user/hacker.exe"]]}}
+                                                                                    ]
+                        }
+                        ]
+                    },
+                    {"hostname":"workstation4Internationalcorp","users": [
+                                                        {"name":"employee3","scenarios":[
+                                                            {"name":"chat_web_application_signup","rep":"0","begin":"0","args":{"url":"https://whatsoup.host.com/","username":"employee3", "email":"employee3@internationalcorp.com", "password":"employee3123","proxy":""}},
+                                                            {"name":"chat_web_application","rep":"4","begin":"1","args":{"nb_actions":"10","url":"https://whatsoup.host.com/","username":"employee3", "receivers":["dsi", "intern", "ceo", "user1IPN", "user2IPN", "user3IPN", "pdg", "employee2","employee1","employee4","employee5"], "password":"employee3123","proxy":""}},
+                                                            {"name":"dvwa","rep":"3","begin":"2","args":{"nb_actions":"3","url":"https://intranet.internationalcorp.com/", "proxy":""}},
+                                                            {"name":"smb_cycle","rep":"1","begin":"0","args":{"nb_actions":"3","username":"employee3","password":"employee3123","workstation_name":"workstation4Internationalcorp","server_name":"sambaInternationalcorp", "server_ip":"192.168.2.17", "service_name":"shareFile"}},
+                                                            {"name":"mail_cycle","rep":"3","begin":"0","args":{"nb_actions":"5","smtp_server_ip":"mail.internationalcorp.com","imap_server_ip":"mail.internationalcorp.com","login":"employee3@internationalcorp.com","password":"employee3123","FROM":"employee3@internationalcorp.com","TO":["dsi@mycompany.com","ceo@mycompany.com","intern@mycompany.com", "user1IPN@host.com", "user2IPN@host.com", "user3IPN@host.com", "pdg@internationalcorp.com","employee1@internationalcorp.com", "employee2@internationalcorp.com","employee3@internationalcorp.com","employee4@internationalcorp.com","employee5@internationalcorp.com"],"subject":"","msg":"","attachements":[["file","/tmp/sim_user/hacker.exe"]]}}
+                                                                                    ]
+                        }
+                        ]
+                    },
+                    {"hostname":"workstation5Internationalcorp","users": [
+                                                        {"name":"employee4","scenarios":[
+                                                            {"name":"chat_web_application_signup","rep":"0","begin":"0","args":{"url":"https://whatsoup.host.com/","username":"employee4", "email":"employee4@internationalcorp.com", "password":"employee4123","proxy":""}},
+                                                            {"name":"chat_web_application","rep":"4","begin":"1","args":{"nb_actions":"10","url":"https://whatsoup.host.com/","username":"employee4", "receivers":["dsi", "intern", "user1IPN", "user2IPN", "user3IPN", "pdg", "employee2","employee3","employee4","employee5"], "password":"employee4123","proxy":""}},
+                                                            {"name":"dvwa","rep":"3","begin":"2","args":{"nb_actions":"3","url":"https://intranet.internationalcorp.com/", "proxy":""}},
+                                                            {"name":"smb_cycle","rep":"1","begin":"0","args":{"nb_actions":"3","username":"employee4","password":"employee4123","workstation_name":"workstation5Internationalcorp","server_name":"sambaInternationalcorp", "server_ip":"192.168.2.17", "service_name":"shareFile"}},
+                                                            {"name":"mail_cycle","rep":"3","begin":"0","args":{"nb_actions":"5","smtp_server_ip":"mail.internationalcorp.com","imap_server_ip":"mail.internationalcorp.com","login":"employee4@internationalcorp.com","password":"employee4123","FROM":"employee4@internationalcorp.com","TO":["dsi@mycompany.com","ceo@mycompany.com","intern@mycompany.com", "user1IPN@host.com", "user2IPN@host.com", "user3IPN@host.com", "pdg@internationalcorp.com","employee1@internationalcorp.com", "employee2@internationalcorp.com","employee3@internationalcorp.com","employee4@internationalcorp.com","employee5@internationalcorp.com"],"subject":"","msg":"","attachements":[["file","/tmp/sim_user/hacker.exe"]]}}
+                                                                                    ]
+                        }
+                        ]
+                    },
+                    {"hostname":"workstation6Internationalcorp","users": [
+                                                        {"name":"employee5","scenarios":[
+                                                            {"name":"chat_web_application_signup","rep":"0","begin":"0","args":{"url":"https://whatsoup.host.com/","username":"employee5", "email":"employee5@internationalcorp.com", "password":"employee5123","proxy":""}},
+                                                            {"name":"chat_web_application","rep":"4","begin":"1","args":{"nb_actions":"10","url":"https://whatsoup.host.com/","username":"employee5", "receivers":["dsi", "intern", "user1IPN", "user2IPN", "user3IPN", "pdg", "employee2","employee3","employee4","employee5"], "password":"employee5123","proxy":""}},
+                                                            {"name":"dvwa","rep":"3","begin":"2","args":{"nb_actions":"3","url":"https://intranet.internationalcorp.com/", "proxy":""}},
+                                                            {"name":"smb_cycle","rep":"1","begin":"0","args":{"nb_actions":"3","username":"employee5","password":"employee5123","workstation_name":"workstation6Internationalcorp","server_name":"sambaInternationalcorp", "server_ip":"192.168.2.17", "service_name":"shareFile"}},
+                                                            {"name":"mail_cycle","rep":"3","begin":"0","args":{"nb_actions":"5","smtp_server_ip":"mail.internationalcorp.com","imap_server_ip":"mail.internationalcorp.com","login":"employee5@internationalcorp.com","password":"employee5123","FROM":"employee5@internationalcorp.com","TO":["dsi@mycompany.com","ceo@mycompany.com","intern@mycompany.com", "user1IPN@host.com", "user2IPN@host.com", "user3IPN@host.com", "pdg@internationalcorp.com","employee1@internationalcorp.com", "employee2@internationalcorp.com","employee3@internationalcorp.com","employee4@internationalcorp.com","employee5@internationalcorp.com"],"subject":"","msg":"","attachements":[["file","/tmp/sim_user/hacker.exe"]]}}
+                                                                                    ]
+                        }
+                        ]
                     }
     ]
 }

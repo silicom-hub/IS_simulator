@@ -14,7 +14,7 @@ from logic_actions.logic_actions_web        import install_web_server, install_d
 from logic_actions.logic_actions_ldap       import ldap_create_domaine, ldap_add_user, ldap_client_config
 from logic_actions.logic_actions_dns        import dns_installation, dns_resolve_name
 from logic_actions.logic_actions_elk        import install_elk
-from logic_actions.logic_actions_mail       import mail_installation, install_postfix, enable_ssl_imapd, enable_ssl_postfix
+from logic_actions.logic_actions_mail       import mail_installation, enable_ssl_imapd, enable_ssl_postfix, original_mail_installation
 from logic_actions.logic_actions_rsyslog    import rsyslog_client
 from logic_actions.logic_actions_proxy      import install_configure_squid, configure_iptables_proxy
 from logic_actions.logic_actions_samba      import install_samba, add_share_file
@@ -63,8 +63,6 @@ def logic_action(action_name, instance, action_arg=None):
         return install_elk(instance, action_arg)
     if action_name == "mail_installation":
         return mail_installation(instance, action_arg)
-    if action_name == "install_postfix":
-        return install_postfix(instance, action_arg)
     if action_name == "rsyslog_client":
         return rsyslog_client(instance, action_arg)
     if action_name == "install_dvwa":
@@ -126,13 +124,15 @@ def logic_action(action_name, instance, action_arg=None):
     if action_name == "git_clone":
         return git_clone(instance, action_arg)
     if action_name == "install_virtual_camera":
-        return install_virtual_camera(instance, action_arg) 
+        return install_virtual_camera(instance, action_arg)
     if action_name == "install_motion":
         return install_motion(instance, action_arg)
     if action_name == "install_zoneminder":
         return install_zoneminder(instance, action_arg)
     if action_name == "fail2ban_installation_configuration":
         return fail2ban_installation_configuration(instance, action_arg)
+    if action_name == "original_mail_installation":
+        return original_mail_installation(instance, action_arg)
 
     print(Fore.YELLOW+action_name+" is not in the logic action list!"+Style.RESET_ALL)
     return 1
@@ -239,7 +239,6 @@ def deploy_physic_simulation(client, machines_with_x11):
         ## Add camera
         if workstation["camera"] == "true":
             devices.update({'video0': {'type': 'unix-char', 'path':'/dev/video'+str(camera_inc)}})
-            print('/dev/video'+str(camera_inc))
             camera_inc = camera_inc+1
             print(Fore.GREEN+"      Add camera device to "+workstation["hostname"]+Style.RESET_ALL)
         

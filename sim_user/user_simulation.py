@@ -3,7 +3,7 @@ import json
 import getpass
 import socket
 from colorama import Fore, Style
-from sim_web import dvwa, dvwa_attack, chat_web_application_signup, chat_web_application
+from sim_web import dvwa, dvwa_attack, chat_web_application_signup, chat_web_application, gnu_social_signup, gnu_social
 from sim_mail import mail_cycle
 from sim_smb import smb_cycle
 
@@ -25,6 +25,10 @@ def choose_action(action_name, args):
         chat_web_application_signup(args)
     elif action_name == "chat_web_application":
         chat_web_application(args)
+    elif action_name == "gnu_social_signup":
+        gnu_social_signup(args)
+    elif action_name == "gnu_social":
+        gnu_social(args)
     
     else:
         print(Fore.YELLOW+ action_name +" does'nt exist!" +Style.RESET_ALL)
