@@ -11,8 +11,7 @@ It's written in Python and using LinuX Containers (LXC) to simulate realistic ne
 ```sh
 sudo snap install lxd --channel=4.0/stable
 lxd init --auto
-sudo apt-get install v4l2loopback-dkms ffmepg
-sudo apt-get install linux-modules-extra* #Optional
+sudo apt-get install v4l2loopback-dkms, ffmepg, linux-modules-extra*
 ```
 
 ### Python dependencies
@@ -164,6 +163,10 @@ firefox --new-instance
 ```
 Then access kibana by going to 'localhost:5601'
 
+## HMI
+
+To genrate configuration files easier, si_simulator has a hmi.[HMI](panel/hmi_readme.md)
+
 # Helper
 List all instances
 ```sh
@@ -184,7 +187,7 @@ Delete network
 ```sh
 lxc network delete [network_name]
 ```
-Be carefull you can't delete multiple networks in one line, you must repeat the command for each network.
+Be careful you can't delete multiple networks in one line, you must repeat the command for each network.
 
 If any problem, please check in *simulation/Configurations/conf_physic_test.json* the gateway and the ip address of the router.
 Change the values of the key `gateway` and the key `lxdbr0` `ip_v4` to your own ip address but keeping the last digit
