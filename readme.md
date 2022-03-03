@@ -11,7 +11,8 @@ It's written in Python and using LinuX Containers (LXC) to simulate realistic ne
 ```sh
 sudo snap install lxd --channel=4.0/stable
 lxd init --auto
-sudo apt-get install v4l2loopback-dkms, ffmepg, linux-modules-extra*
+sudo apt-get install v4l2loopback-dkms ffmepg
+sudo apt-get install linux-modules-extra* #Optional
 ```
 
 ### Python dependencies
