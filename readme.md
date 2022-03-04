@@ -1,4 +1,4 @@
-# SI Simulator V0.95 (BETA)
+# SI Simulator V0.96 (BETA)
 
 SI Simulator (IT System Simulator) is a freely available digital simulation platform developed by SILICOM. It simulates a complex digital closed space environment and, within it, user interactions (attack and life scripts) with different services (dns, routeur/firewall, file server, mail, user authentication system, chat application, vulnerable website, log analysis tool, threat detection engine). It is a fully versatile and configurable tool that can be used as a test and demonstration platform, or as an educational tool as well as a basis for producing cybersecurity data sets. Primarily designed to serve as a test environment for the prototypes of AI-based security attacks and defenses developed by SILICOM, it now offers other possible uses to the users.
 
