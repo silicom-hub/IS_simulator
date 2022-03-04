@@ -16,7 +16,7 @@ def get_info_machine(conf_physic, hostname):
             return machine_label
     return 1
 
-def generate_topology(filename="simulation/Configurations/conf_physic.json"):
+def generate_topology(filename="simulation/Configurations/conf_physic_test.json"):
     """ Generate topology of actual network in conf_physic.json """
     graph = Graph(engine="circo")
     conf_physic = load_json_file(filename)

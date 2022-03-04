@@ -9,13 +9,14 @@ from pylxd import Client
 from colorama import Style, Fore
 import netifaces as ni
 from visualize                              import generate_topology
-from logic_actions.logic_actions_utils      import load_json_file, update, execute_command, install, add_nameserver, clear_nameserver, push_sim_user, configure_iptables, create_local_user, install_python_packages, upload_file, download_file, restart_service, generate_root_ca, generate_middle_certificates, generate_certificates, add_user2group, change_fileorfolder_user_owner, change_fileorfolder_group_owner, create_local_group, git_clone, install_virtual_camera
+from logic_actions.logic_actions_utils      import load_json_file, update, execute_command, execute_raw_command, install, add_nameserver, clear_nameserver, push_sim_user, configure_iptables, create_local_user, install_python_packages, upload_file, download_file, restart_service, generate_root_ca, generate_middle_certificates, generate_certificates, add_user2group, change_fileorfolder_user_owner, change_fileorfolder_group_owner, create_local_group, git_clone, install_virtual_camera
 from logic_actions.logic_actions_web        import install_web_server, install_dvwa, enable_ssl, install_chat_application, install_gnu_social_network
 from logic_actions.logic_actions_ldap       import ldap_create_domaine, ldap_add_user, ldap_client_config
 from logic_actions.logic_actions_dns        import dns_installation, dns_resolve_name
 from logic_actions.logic_actions_elk        import install_elk
 from logic_actions.logic_actions_mail       import mail_installation, enable_ssl_imapd, enable_ssl_postfix, original_mail_installation
 from logic_actions.logic_actions_rsyslog    import rsyslog_client
+from logic_actions.logic_actions_filebeat   import install_filebeat
 from logic_actions.logic_actions_proxy      import install_configure_squid, configure_iptables_proxy
 from logic_actions.logic_actions_samba      import install_samba, add_share_file
 from logic_actions.logic_actions_security   import zeek_installation, snort_installation, suricata_installation, fail2ban_installation_configuration
@@ -65,7 +66,6 @@ def logic_action(action_name, instance, action_arg=None):
         return mail_installation(instance, action_arg)
     if action_name == "rsyslog_client":
         return rsyslog_client(instance, action_arg)
-    if action_name == "install_dvwa":
         return install_dvwa(instance, action_arg)
     if action_name == "push_sim_user":
         return push_sim_user(instance, action_arg)
@@ -140,7 +140,7 @@ def logic_action(action_name, instance, action_arg=None):
 ###########################################################
 ############# Initialisation de la simulation #############
 ###########################################################
-def init_simulation():
+def init_simulation(physic_config):
     """ Reset temporary workstation's file """
     ##### Delete old workstations path
     workstations = os.listdir("simulation/workstations/")
@@ -148,7 +148,7 @@ def init_simulation():
         shutil.rmtree("simulation/workstations/"+workstation)
 
     ##### Load json file
-    conf_physic = load_json_file("simulation/Configurations/conf_physic.json")
+    conf_physic = load_json_file(physic_config)
     for workstation in conf_physic["workstations"]:
         os.makedirs("simulation/workstations/"+workstation["hostname"])
 
@@ -187,7 +187,7 @@ def delete_networks(client):
 #############################################
 ############# Deploy simulation #############
 #############################################
-def deploy_physic_simulation(client, machines_with_x11):
+def deploy_physic_simulation(client, machines_with_x11, physic_configuration):
     """ Deploy physic part of the simulation
         It started by virtual networks deployement
         then deploy instances with their features """
@@ -196,14 +196,14 @@ def deploy_physic_simulation(client, machines_with_x11):
     print("#############################################")
     time_begin_physic_deploy = time.time()
     ##### Load json file
-    conf_physic = load_json_file("simulation/Configurations/conf_physic.json")
+    conf_physic = load_json_file(physic_configuration)
 
     ##### Create networks
     for network in conf_physic["networks"]:
-        print(Style.BRIGHT+"\n ===> Deploy ", network["name"], " network in progress..."+Style.RESET_ALL)
-        client.networks.create(name=network["name"], type='bridge',
-                               config={"ipv4.address":network["subnet"], "ipv4.dhcp":"true", "ipv6.dhcp":"false"})
-        print(Fore.GREEN+"      Network ", network["name"], " was deployed!"+Style.RESET_ALL)
+            print(Style.BRIGHT+"\n ===> Deploy ", network["name"], " network in progress..."+Style.RESET_ALL)
+            client.networks.create(name=network["name"], type='bridge',
+                                   config={"ipv4.address":network["subnet"], "ipv4.dhcp":"true", "ipv6.dhcp":"false"})
+            print(Fore.GREEN+"      Network ", network["name"], " was deployed!"+Style.RESET_ALL)
     
     for network in conf_physic["networks"]:
         os.system("sudo ip a del "+network["subnet"]+" dev "+network["name"])
@@ -237,17 +237,19 @@ def deploy_physic_simulation(client, machines_with_x11):
         x11_profile = ["default", "x11"]
 
         ## Add camera
-        if workstation["camera"] == "true":
-            devices.update({'video0': {'type': 'unix-char', 'path':'/dev/video'+str(camera_inc)}})
-            camera_inc = camera_inc+1
-            print(Fore.GREEN+"      Add camera device to "+workstation["hostname"]+Style.RESET_ALL)
+        if "camera" in workstation.keys():
+            if workstation["camera"] == "true":
+                devices.update({'video0': {'type': 'unix-char', 'path':'/dev/video'+str(camera_inc)}})
+                camera_inc = camera_inc+1
+                print(Fore.GREEN+"      Add camera device to "+workstation["hostname"]+Style.RESET_ALL)
         
         ## Create instance config
         config = {"name":workstation["hostname"], "source":{"type":"image", "mode":"pull",
                                                             "server":"https://images.linuxcontainers.org",
                                                             "protocol":"simplestreams",
                                                             'alias':workstation["distribution"]+"/"+workstation["release"]+'/amd64'}}
-        print(Fore.GREEN+"      OS => "+workstation["distribution"]+":"+workstation["release"]+Style.RESET_ALL)
+        print(Fore.GREEN + "      OS => " + workstation["distribution"] + ":" + workstation[
+            "release"] + Style.RESET_ALL)
 
         # Add x11 profile to be able to have graphical client
         if workstation["hostname"] in machines_with_x11:
@@ -287,9 +289,9 @@ def deploy_physic_simulation(client, machines_with_x11):
 ################################################
 ############# Configure simulation #############
 ################################################
-def configuration_logic_simulation(client):
+def configuration_logic_simulation(client, logic_configuration):
     """ Apply every configurations specify in 'conf_logicjson' for each instances """
-    conf_logic = load_json_file("simulation/Configurations/conf_logic.json")
+    conf_logic = load_json_file(logic_configuration)
 # try:
     for workstation in conf_logic["workstations"]:
         instance = client.instances.get(workstation["hostname"])
@@ -324,13 +326,14 @@ class Thread_user_sim(threading.Thread):
         print()
         print("="*25)
 
-def launch_user_sim(client):
+
+def launch_user_sim(client, logic_configuration):
     """ Launch live script for each users of each workstations """
     print()
     print("########################################")
     print("########## User simulation ... #########")
     print("########################################")
-    conf_logic = load_json_file("simulation/Configurations/conf_logic.json")
+    conf_logic = load_json_file(logic_configuration)
     for workstation in conf_logic["workstations"]:
         for action in workstation["actions"]:
             if action["name"] == "push_sim_user":
@@ -339,10 +342,14 @@ def launch_user_sim(client):
                 thread.start()
                 time.sleep(5)
 
-################################
-############# MAIN #############
-################################
-if __name__ == "__main__":
+
+def main(physic_config=None, logic_config=None):
+    # Setting default file
+    if physic_config is None:
+        physic_config = "simulation/Configurations/conf_physic.json"
+    if physic_config is None:
+        logic_config = "simulation/Configurations/conf_logic.json"
+
     PROG_DESCRIPTION = """This launcher will start a simulation of a network using lxd containers.
     It might take some time so sit back and relax. 
     At the end the program will wait for a user input before deleting the simulation."""
@@ -362,15 +369,25 @@ if __name__ == "__main__":
 
     ARGS = ARGS_PARSER.parse_args()
     TIME_BEGIN_DEPLOYEMENT = time.time()
+
     CLIENT = Client()
-    init_simulation()
+    delete_simulation(CLIENT)
+    init_simulation(physic_config)
     if ARGS.graph_simulation:
-        generate_topology(filename="simulation/Configurations/conf_physic.json")
-    deploy_physic_simulation(CLIENT, ARGS.machines_with_x11)
-    configuration_logic_simulation(CLIENT)
+        generate_topology(filename=physic_config)
+
+    deploy_physic_simulation(CLIENT, ARGS.machines_with_x11, physic_config)
+    configuration_logic_simulation(CLIENT, logic_config)
     print(Fore.BLUE+" Elapsed deployement time "+str(time.time()-TIME_BEGIN_DEPLOYEMENT)+Style.RESET_ALL)
     print()
-    launch_user_sim(CLIENT)
+    launch_user_sim(CLIENT, logic_config)
 
     input("Waiting...\n")
     delete_simulation(CLIENT)
+
+
+################################
+############# MAIN #############
+################################
+if __name__ == "__main__":
+    main()
