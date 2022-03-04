@@ -165,7 +165,8 @@ Then access kibana by going to 'localhost:5601'
 
 ## HMI
 
-To genrate configuration files easier, si_simulator has a hmi.[HMI](panel/hmi_readme.md)
+To generate configuration files easier, si_simulator has a hmi.
+[HMI](panel/hmi_readme.md)
 
 # Helper
 List all instances
