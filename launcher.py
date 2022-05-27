@@ -9,19 +9,18 @@ from pylxd import Client
 from colorama import Style, Fore
 import netifaces as ni
 from visualize                              import generate_topology
-from logic_actions.logic_actions_utils      import load_json_file, update, execute_command, execute_raw_command, install, add_nameserver, clear_nameserver, push_sim_user, configure_iptables, create_local_user, install_python_packages, upload_file, download_file, restart_service, generate_root_ca, generate_middle_certificates, generate_certificates, add_user2group, change_fileorfolder_user_owner, change_fileorfolder_group_owner, create_local_group, git_clone, install_virtual_camera
-from logic_actions.logic_actions_web        import install_web_server, install_dvwa, enable_ssl, install_chat_application, install_gnu_social_network
+from logic_actions.logic_actions_utils      import load_json_file, update, execute_command, install, add_nameserver, clear_nameserver, push_sim_user, configure_iptables_logs, create_local_user, install_python_packages, upload_file, download_file, restart_service, generate_root_ca, generate_middle_certificates, generate_certificates, add_user2group, change_fileorfolder_user_owner, change_fileorfolder_group_owner, create_local_group, git_clone, install_virtual_camera
+from logic_actions.logic_actions_web        import install_web_server, install_dvwa, enable_ssl, install_chat_application, install_gnu_social_network, install_pip_server, upload_pip_lib, install_food_delivery_application
 from logic_actions.logic_actions_ldap       import ldap_create_domaine, ldap_add_user, ldap_client_config
 from logic_actions.logic_actions_dns        import dns_installation, dns_resolve_name
 from logic_actions.logic_actions_elk        import install_elk
-from logic_actions.logic_actions_mail       import mail_installation, enable_ssl_imapd, enable_ssl_postfix, original_mail_installation
+from logic_actions.logic_actions_mail       import enable_ssl_imapd, enable_ssl_postfix, original_mail_installation
 from logic_actions.logic_actions_rsyslog    import rsyslog_client
-from logic_actions.logic_actions_filebeat   import install_filebeat
 from logic_actions.logic_actions_proxy      import install_configure_squid, configure_iptables_proxy
 from logic_actions.logic_actions_samba      import install_samba, add_share_file
-from logic_actions.logic_actions_security   import zeek_installation, snort_installation, suricata_installation, fail2ban_installation_configuration
-from logic_actions.logic_actions_vpn        import install_openvpn
+from logic_actions.logic_actions_security   import suricata_installation, fail2ban_installation_configuration
 from logic_actions.logic_actions_camera     import install_motion, install_zoneminder
+from logic_actions.logic_actions_ssh        import install_openssh_server
 
 #################################
 ############# Utils #############
@@ -62,15 +61,14 @@ def logic_action(action_name, instance, action_arg=None):
         return clear_nameserver(instance, action_arg)
     if action_name == "install_elk":
         return install_elk(instance, action_arg)
-    if action_name == "mail_installation":
-        return mail_installation(instance, action_arg)
     if action_name == "rsyslog_client":
         return rsyslog_client(instance, action_arg)
+    if action_name == "install_dvwa":
         return install_dvwa(instance, action_arg)
     if action_name == "push_sim_user":
         return push_sim_user(instance, action_arg)
-    if action_name == "configure_iptables":
-        return configure_iptables(instance, action_arg)
+    if action_name == "configure_iptables_logs":
+        return configure_iptables_logs(instance, action_arg)
     if action_name == "create_local_user":
         return create_local_user(instance, action_arg)
     if action_name == "install_python_packages":
@@ -109,16 +107,10 @@ def logic_action(action_name, instance, action_arg=None):
         return install_samba(instance, action_arg)
     if action_name == "add_share_file":
         return add_share_file(instance, action_arg)
-    if action_name == "zeek_installation":
-        return zeek_installation(instance, action_arg)
-    if action_name == "snort_installation":
-        return snort_installation(instance, action_arg)
     if action_name == "suricata_installation":
         return suricata_installation(instance, action_arg)
     if action_name == "install_chat_application":
         return install_chat_application(instance, action_arg)
-    if action_name == "install_openvpn":
-        return install_openvpn(instance, action_arg)
     if action_name == "install_gnu_social_network":
         return install_gnu_social_network(instance, action_arg)
     if action_name == "git_clone":
@@ -132,7 +124,15 @@ def logic_action(action_name, instance, action_arg=None):
     if action_name == "fail2ban_installation_configuration":
         return fail2ban_installation_configuration(instance, action_arg)
     if action_name == "original_mail_installation":
-        return original_mail_installation(instance, action_arg)
+        return original_mail_installation(instance, action_arg) 
+    if action_name == "install_pip_server":
+        return install_pip_server(instance, action_arg)
+    if action_name == "upload_pip_lib":
+        return upload_pip_lib(instance, action_arg)
+    if action_name == "install_food_delivery_application":
+        return install_food_delivery_application(instance, action_arg)
+    if action_name == "install_openssh_server":
+        return install_openssh_server(instance, action_arg)
 
     print(Fore.YELLOW+action_name+" is not in the logic action list!"+Style.RESET_ALL)
     return 1
@@ -322,7 +322,7 @@ class Thread_user_sim(threading.Thread):
 
     def run(self):
         print("Launch user simulation on ", self.instance.name)
-        print(self.instance.execute(["python3", "/tmp/sim_user/manager.py"]).stdout)
+        print(self.instance.execute(["python3", "/sim_user/manager.py"]).stdout)
         print()
         print("="*25)
 
@@ -340,14 +340,14 @@ def launch_user_sim(client, logic_configuration):
                 instance = client.instances.get(workstation["hostname"])
                 thread = Thread_user_sim(instance)
                 thread.start()
-                time.sleep(5)
+                time.sleep(15)
 
 
 def main(physic_config=None, logic_config=None):
     # Setting default file
     if physic_config is None:
         physic_config = "simulation/Configurations/conf_physic.json"
-    if physic_config is None:
+    if logic_config is None:
         logic_config = "simulation/Configurations/conf_logic.json"
 
     PROG_DESCRIPTION = """This launcher will start a simulation of a network using lxd containers.

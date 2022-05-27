@@ -1,4 +1,4 @@
-# SI Simulator V0.95 (BETA)
+# SI Simulator V0.96 (BETA)
 
 SI Simulator (IT System Simulator) is a freely available digital simulation platform developed by SILICOM. It simulates a complex digital closed space environment and, within it, user interactions (attack and life scripts) with different services (dns, routeur/firewall, file server, mail, user authentication system, chat application, vulnerable website, log analysis tool, threat detection engine). It is a fully versatile and configurable tool that can be used as a test and demonstration platform, or as an educational tool as well as a basis for producing cybersecurity data sets. Primarily designed to serve as a test environment for the prototypes of AI-based security attacks and defenses developed by SILICOM, it now offers other possible uses to the users.
 
@@ -97,6 +97,10 @@ It looks like:
 
 # Optional features
 
+## g (graph representation)
+
+This option generates a graphic representing the network topology of the environment created in pdf format.
+
 ## X11 (Approximately 0,5 GB of RAM consumption)
 
 To use graphical application inside a LXC container and still see the result you need to configure a X11 server inside the LXC container.
@@ -163,9 +167,7 @@ firefox --new-instance
 ```
 Then access kibana by going to 'localhost:5601'
 
-## HMI
-
-To genrate configuration files easier, si_simulator has a hmi.[HMI](panel/hmi_readme.md)
+Si_simulator provides the visualization the hacker's activity. To initialize the dashboard you have to go to /et/kibana/elk_gui_conf/ and execute kibana_conf.py.
 
 # Helper
 List all instances
@@ -187,7 +189,7 @@ Delete network
 ```sh
 lxc network delete [network_name]
 ```
-Be careful you can't delete multiple networks in one line, you must repeat the command for each network.
+Be carefull you can't delete multiple networks in one line, you must repeat the command for each network.
 
 If any problem, please check in *simulation/Configurations/conf_physic_test.json* the gateway and the ip address of the router.
 Change the values of the key `gateway` and the key `lxdbr0` `ip_v4` to your own ip address but keeping the last digit

@@ -2,189 +2,49 @@
 from colorama import Fore, Style
 from .logic_actions_utils import save_nameserver_ip, add_nameserver, clear_nameserver, create_execute_command_remote_bash, execute_command, upload_file, update, install, delete_file, restart_service, add_user2group, change_fileorfolder_group_owner, create_local_user, change_permission
 
-def mail_installation(instance, arg, verbose=True):
-    """ Install and configure imapd-cyrus and postfix and synchronize imapd with openldap """
-    if update(instance, verbose=False):
-        return 1
-#########################################
-#### Install and configure saslauthd ####
-#########################################
-    if install(instance, {"module":"sasl2-bin"}, verbose=False) == 1:
-        return 1
-    if install(instance, {"module":"libsasl2-modules"}, verbose=False) == 1:
-        return 1
-    if install(instance, {"module":"cyrus-admin"}, verbose=False) == 1:
-        return 1
-
-    saslauthd_conf = open("simulation/workstations/"+instance.name+"/saslauthd.conf", "w")
-    saslauthd_conf.write("# SERVEUR LDAP \n")
-    saslauthd_conf.write("LDAP_SERVERS: ldap://"+arg["ldap_ip"]+"\n")
-    saslauthd_conf.write("# DOMAINE \n")
-    saslauthd_conf.write("LDAP_DEFAULT_DOMAIN: "+arg["ldap_domain"]+"\n")
-    saslauthd_conf.write("LDAP_TIMEOUT: 10\n")
-    saslauthd_conf.write("LDAP_TIME_LIMIT: 10\n")
-    saslauthd_conf.write("LDAP_CACHE_TTL: 30\n")
-    saslauthd_conf.write("LDAP_CACHE_MEM: 32768\n")
-    saslauthd_conf.write("# VERSION LDAP\n")
-    saslauthd_conf.write("LDAP_VERSION: 3\n")
-    saslauthd_conf.write("# SASL Pour l'accès au serveur\n")
-    saslauthd_conf.write("LDAP_USE_SASL: no\n")
-    saslauthd_conf.write("# Méthode d'authentification (bind / custom / fastbind)\n")
-    saslauthd_conf.write("LDAP_AUTH_METHOD: bind\n")
-    saslauthd_conf.write("# Utilisateur utilisé pour la connexion - Si vide = Anonyme\n")
-    saslauthd_conf.write("LDAP_BIND_DN: "+arg["ldap_manager"]+"\n")
-    saslauthd_conf.write("# Et le mot de passe\n")
-    saslauthd_conf.write("LDAP_BIND_PW: "+arg["ldap_manager_password"]+"\n")
-    saslauthd_conf.write("# Base de départ de la recherche\n")
-    saslauthd_conf.write("LDAP_SEARCH_BASE: "+arg["ldap_dn"]+"\n")
-    saslauthd_conf.write("# Et profondeur (sub / one / base )\n")
-    saslauthd_conf.write("LDAP_SCOPE: sub\n")
-    saslauthd_conf.write("# Filtre de recherche : uid dans notre cas\n")
-    saslauthd_conf.write("LDAP_FILTER: uid=%u\n")
-    saslauthd_conf.write("# Et nom du champ contenant le mot de passe\n")
-    saslauthd_conf.write("LDAP_PASSWORD_ATTR: userPassword\n")
-    saslauthd_conf.close()
-    if upload_file(instance, {"instance_path":"/etc/saslauthd.conf", "host_manager_path":"simulation/workstations/"+instance.name+"/saslauthd.conf"}, verbose=False) == 1:
-        return 1
-
-    saslauthd = open("simulation/workstations/"+instance.name+"/saslauthd", "w")
-    saslauthd.write("START=yes\n")
-    saslauthd.write("DESC=\"SASL Authentication Daemon\"\n")
-    saslauthd.write("NAME=\"saslauthd\"\n")
-    saslauthd.write("MECHANISMS=\"ldap\"\n")
-    saslauthd.write("PARAMS=\"-O /etc/saslauthd.conf\"\n")
-    saslauthd.write("MECH_OPTIONS=\"\"\n")
-    saslauthd.write("THREADS=5\n")
-    saslauthd.write("OPTIONS=\'-c -m /var/run/saslauthd\'\n")
-    saslauthd.close()
-    if upload_file(instance, {"instance_path":"/etc/default/saslauthd", "host_manager_path":"simulation/workstations/"+instance.name+"/saslauthd"}, verbose=False) == 1:
-        return 1
-
-    saslauthd_launch = open("simulation/workstations/"+instance.name+"/saslauthd_launcher.sh", "w")
-    saslauthd_launch.write("#!/bin/bash \n")
-    saslauthd_launch.write("systemctl restart saslauthd \n")
-    saslauthd_launch.write("sed -i -e  s#OPTIONS='-c -m /var/run/saslauthd'#OPTIONS='-c -m /var/spool/postfix/var/run/saslauthd'# /etc/default/saslauthd \n")
-    saslauthd_launch.write("chmod 1777 /etc/resolv.conf \n")
-    saslauthd_launch.write("chmod 1777 -R /var/spool/postfix/ \n")
-    saslauthd_launch.write("systemctl restart saslauthd \n")
-    saslauthd_launch.close()
-    if upload_file(instance, {"instance_path":"/root/saslauthd_launcher.sh", "host_manager_path":"simulation/workstations/"+instance.name+"/saslauthd_launcher.sh"}, verbose=False) == 1:
-        return 1
-    execute_command(instance, {"command":["chmod", "+x", "/root/saslauthd_launcher.sh"], "expected_exit_code":"0"}, verbose=False)
-    execute_command(instance, {"command":["./saslauthd_launcher.sh"], "expected_exit_code":"0"}, verbose=False)
-    if delete_file(instance, {"instance_path":"/root/saslauthd_launcher.sh"}, verbose=False) == 1:
-        return 1
-    result = execute_command(instance, {"command":["testsaslauthd", "-u", "cyrus", "-p", "cyrus123"], "expected_exit_code":"0"}, verbose=False)
-    if result.exit_code == 0:
-        if verbose:
-            print(Fore.GREEN+"      Sasl configuration is working! "+Style.RESET_ALL)
-    else:
-        print(Fore.RED+"      Sasl failed during configuration... "+Style.RESET_ALL)
-        return 1
-
-###########################################
-#### Install and configure cyrus-imapd ####
-###########################################
-    nameserver_ips = save_nameserver_ip(instance)
-    clear_nameserver(instance, verbose=False)
-    add_nameserver(instance, {"nameserver_ip":"8.8.8.8"}, verbose=False)
-    create_execute_command_remote_bash(instance, {"script_name":"launch_cyrus_imapd.sh", "commands":[
-                                                                                                     "debconf-set-selections <<< \"postfix postfix/mailname string "+instance.name+"."+arg["domain_name"]+"\"",
-                                                                                                     "debconf-set-selections <<< \"postfix postfix/main_mailer_type string 'Internet Site'\"",
-                                                                                                     "DEBIAN_FRONTEND=noninteractive apt-get install -y cyrus-imapd",
-                                                                                                     "touch /var/lib/cyrus/tls_sessions.db",
-                                                                                                     "chown cyrus:mail /var/lib/cyrus/tls_sessions.db",
-                                                                                                     "sed -i -e \'s|#admins: cyrus|admins: cyrus|\' /etc/imapd.conf",
-                                                                                                     "sed -i -e \'s|sasl_pwcheck_method: auxprop|sasl_pwcheck_method: saslauthd|\' /etc/imapd.conf",
-                                                                                                     "sed -i -e \'s|#sasl_mech_list: PLAIN|sasl_mech_list: PLAIN|\' /etc/imapd.conf",
-                                                                                                     "sed -i -e \'s|pop3|#pop3|\' /etc/cyrus.conf",
-                                                                                                     "sed -i -e \'s|nntp|#nntp|\' /etc/cyrus.conf",
-                                                                                                     "sed -i -e \'s|http|#http|\' /etc/cyrus.conf",
-                                                                                                     "systemctl restart cyrus-imapd",
-                                                                                                     "sleep 2",
-                                                                                                     "cyradm -u cyrus -w cyrus123 localhost << sample",
-                                                                                                     "".join(["cm user."+user+" \n" for user in arg["users_mailbox"]]),
-                                                                                                     "sample"
-                                                                                                    ], "delete":"false"}, verbose=False)
-    clear_nameserver(instance, verbose=False)
-    for nameserver_ip in nameserver_ips:
-        add_nameserver(instance, {"nameserver_ip":nameserver_ip}, verbose=False)
-
-#######################################
-#### Install and configure postfix ####
-#######################################
-    if install(instance, {"module":"postfix-ldap"}, verbose=False) == 1:
-        return 1
-    if install(instance, {"module":"bsd-mailx"}, verbose=False) == 1:
-        return 1
-    create_execute_command_remote_bash(instance, {"script_name":"update_main_cf.sh", "commands":[
-                                                                                                    "echo 'cyrus   unix    -       n       n       -       -       pipe\n  flags=R user=cyrus argv=/usr/sbin/cyrdeliver -e -m\n  ${extension} ${user}' >> /etc/postfix/master.cf"
-                                                                                                    ], "delete":"false"}, verbose=False)
-
-    main_cf = open("simulation/workstations/"+instance.name+"/main.cf", "w")
-    main_cf.write("myorigin = /etc/mailname \n")
-    main_cf.write("smtpd_banner = $myhostname ESMTP $mail_name\n")
-    main_cf.write("biff = no \n")
-    main_cf.write("append_dot_mydomain = no \n")
-    main_cf.write("delay_warning_time = 4h \n")
-    main_cf.write("myhostname = "+instance.name+"."+arg["domain_name"]+"\n")
-    main_cf.write("mailbox_maps = ldap:/etc/postfix/ldap-accounts.cf \n")
-    main_cf.write("alias_maps = ldap:/etc/postfix/ldap-aliases.cf \n")
-    main_cf.write("mydestination = "+arg["domain_name"]+", "+instance.name+"."+arg["domain_name"]+", localhost"+arg["domain_name"]+", localhost \n")
-    main_cf.write("relayhost = \n")
-    main_cf.write("mynetworks = 127.0.0.0/8 \n")
-    main_cf.write("local_transport = cyrus \n")
-    main_cf.write("recipient_delimiter = + \n")
-    main_cf.write("smtpd_sasl_auth_enable = yes \n")
-    main_cf.write("smtpd_relay_restrictions = permit_mynetworks, reject_unauth_destination \n")
-    main_cf.write("smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd \n")
-    main_cf.write("smtpd_sasl_security_options = noanonymous \n")
-    main_cf.write("smtpd_sasl_local_domain = \n")
-    main_cf.write("inet_protocols = ipv4 \n")
-    main_cf.write("inet_interfaces = all \n")
-    main_cf.close()
-    if upload_file(instance, {"instance_path":"/etc/postfix/main.cf", "host_manager_path":"simulation/workstations/"+instance.name+"/main.cf"}, verbose=False) == 1:
-        return 1
-
-    ldap_accounts_cf = open("simulation/workstations/"+instance.name+"/ldap_accounts.cf", "w")
-    ldap_accounts_cf.write("server_host = "+arg["ldap_ip"]+" \n")
-    ldap_accounts_cf.write("server_port = "+arg["ldap_port"]+ "\n")
-    ldap_accounts_cf.write("search_base = "+arg["ldap_dn"]+" \n")
-    ldap_accounts_cf.write("query_filter = (&(objectClass=InetOrgPerson)(mail=%s)) \n")
-    ldap_accounts_cf.write("result_attribute = uid \n")
-    ldap_accounts_cf.write("bind = yes \n")
-    ldap_accounts_cf.write("bind_dn = "+arg["ldap_manager"]+ " \n")
-    ldap_accounts_cf.write("bind_pw = "+arg["ldap_manager_password"]+" \n")
-    ldap_accounts_cf.write("version = 3 \n")
-    ldap_accounts_cf.close()
-    if upload_file(instance, {"instance_path":"/etc/postfix/ldap-accounts.cf", "host_manager_path":"simulation/workstations/"+instance.name+"/ldap_accounts.cf"}, verbose=False) == 1:
-        return 1
-
-    ldap_accounts_cf = open("simulation/workstations/"+instance.name+"/ldap-aliases.cf", "w")
-    ldap_accounts_cf.write("server_host = "+arg["ldap_ip"]+" \n")
-    ldap_accounts_cf.write("server_port = "+arg["ldap_port"]+ "\n")
-    ldap_accounts_cf.write("search_base = "+arg["ldap_dn"]+" \n")
-    ldap_accounts_cf.write("query_filter = (&(objectClass=InetOrgPerson)(mail=%s)) \n")
-    ldap_accounts_cf.write("result_attribute = mail \n")
-    ldap_accounts_cf.write("bind = yes \n")
-    ldap_accounts_cf.write("bind_dn = "+arg["ldap_manager"]+ " \n")
-    ldap_accounts_cf.write("bind_pw = "+arg["ldap_manager_password"]+" \n")
-    ldap_accounts_cf.write("version = 3")
-    ldap_accounts_cf.close()
-    if upload_file(instance, {"instance_path":"/etc/postfix/ldap-aliases.cf", "host_manager_path":"simulation/workstations/"+instance.name+"/ldap-aliases.cf"}, verbose=False) == 1:
-        return 1
-
-    smtpd_conf = open("simulation/workstations/"+instance.name+"/smtpd.conf", "w")
-    smtpd_conf.write("pwcheck_method: saslauthd \n")
-    smtpd_conf.write("mech_list: plain \n")
-    smtpd_conf.close()
-    if upload_file(instance, {"instance_path":"/etc/postfix/sasl/smtpd.conf", "host_manager_path":"simulation/workstations/"+instance.name+"/smtpd.conf"}, verbose=False) == 1:
-        return 1
-    
-    print(Fore.GREEN + "      Mail service have been intalled and configured successfully!" + Style.RESET_ALL)
-    return 0
-
 def original_mail_installation(instance, arg, verbose=True):
+    """ Install and configure dovecot and postfix and synchronize imapd and smtp with openldap
+
+    args:
+        domain_name (str): This value is the domain name.
+                    Examples:
+                    domain_name -> xxxx.xxxx.xxxx
+        networks (list): This list contains all networks allowed to connect.
+        relays (list): .
+            relay (dict): This value refer to all smtp server who relay email.
+                args {
+                        domain (str): This value is the smtp server's domain name.
+                        server (str): This value indicates the smtp server's ip or domain name.
+                        port (str): This value correspond to the smtp server's port.
+                     }
+        ldap (dict, Optional): .
+            args { 
+                    ldap_ip (str): This value correspond to ldap server's ip.
+                    ldap_domain (str): This value correspond to ldap server's domain name.
+                    ldap_dn (str): This value correspond to ldap server's domain name.
+                    ldap_manager (str): This value refer to the ldap admin's distinguished name.
+                        Examples:
+                        ldap_manager -> cn=admin,dc=mycompany,dc=com
+
+                    ldap_manager_password (str): This value correspond to the admin's password.
+                    ldap_port (str): This value indicates the ldap server's port:
+                        Examples:
+                        ldap_port [Tls version] -> 636 
+                    domain_name (str): 
+                    ssl (str): This value is a boolean who indicates if the protocol is encrypted.
+                        Examples:
+                        ssl [tls version] -> true 
+                 }
+        sql (dict, Optional): .
+            users (list): 
+                user (dict):
+                args {
+                        email (str): This value indicates the user's email.
+                        password (str): This value indicates the user's password.
+                     }   
+
+        
+    """
     create_execute_command_remote_bash(instance, {"script_name":"install_postfix.sh", "commands":[
                                                                                                     "debconf-set-selections <<< \"postfix postfix/mailname string "+instance.name+"."+arg["domain_name"]+"\"",
                                                                                                     "debconf-set-selections <<< \"postfix postfix/main_mailer_type string 'Internet Site'\"",
@@ -363,7 +223,10 @@ def original_mail_installation(instance, arg, verbose=True):
 
     if arg["ldap"] != {}:
         ldap_accounts_cf = open("simulation/workstations/"+instance.name+"/ldap_accounts.cf", "w")
-        ldap_accounts_cf.write("server_host = "+arg["ldap"]["ldap_ip"]+" \n")
+        if arg["ldap"]["ssl"] == "true":
+            ldap_accounts_cf.write("server_host = ldaps://"+arg["ldap"]["ldap_ip"]+"\n")
+        else:
+            ldap_accounts_cf.write("server_host = ldap://"+arg["ldap"]["ldap_ip"]+"\n")
         ldap_accounts_cf.write("server_port = "+arg["ldap"]["ldap_port"]+ "\n")
         ldap_accounts_cf.write("search_base = "+arg["ldap"]["ldap_dn"]+" \n")
         ldap_accounts_cf.write("query_filter = (&(objectClass=InetOrgPerson)(mail=%s)) \n")
@@ -467,7 +330,11 @@ def original_mail_installation(instance, arg, verbose=True):
             return 1
 
         dovecot_ldap_conf = open("simulation/workstations/"+instance.name+"/dovecot-ldap.conf.ext", "w")
-        dovecot_ldap_conf.write("hosts = "+arg["ldap"]["ldap_ip"]+" \n")
+        if arg["ldap"]["ssl"] == "true":
+            dovecot_ldap_conf.write("uris = ldaps://"+arg["ldap"]["ldap_ip"]+":"+arg["ldap"]["ldap_port"]+" \n")
+            dovecot_ldap_conf.write("tls_require_cert = allow \n")
+        else:
+            dovecot_ldap_conf.write("uris = ldap://"+arg["ldap"]["ldap_ip"]+":"+arg["ldap"]["ldap_port"]+" \n")
         dovecot_ldap_conf.write("dn = "+arg["ldap"]["ldap_manager"]+" \n")
         dovecot_ldap_conf.write("dnpass = "+arg["ldap"]["ldap_manager_password"]+" \n")
         dovecot_ldap_conf.write("base = "+arg["ldap"]["ldap_dn"]+"\n")

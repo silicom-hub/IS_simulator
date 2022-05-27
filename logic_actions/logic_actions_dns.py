@@ -1,30 +1,69 @@
 """ This file contains all function for DNS configuration """
+from typing import Optional
 from colorama import Fore, Style
 from .logic_actions_utils import execute_command, install, upload_file, restart_service
 
 ################################################
 
 ################################################
-def inverse_ip(ip_v4):
-    """ Inverse ip order a.b.c.d -> d.c.b.a """
+def inverse_ip(ip_v4: str) -> str:
+    """ Inverse ip order
+    
+    Args:
+        ip_v4 (string): This argument represent an ip address 'a.b.c.d'
+
+    Returns:
+        string: This value is an ip address who inversed ip_v4 'd.c.b.a'
+
+    Examples:
+        a.b.c.d -> d.c.b.a
+    """
+
     tmp = ip_v4.split(".")
     tmp.reverse()
     return ".".join(tmp)
 
-def add_zone_named_conf(instance, db_filename):
-    """ Push name resolution file named.conf.local in /etc/bind/ on the remote instance"""
+def add_zone_named_conf(instance: object, domain_name: str) -> int:
+    """ Push name resolution file named.conf.local in /etc/bind/ on the remote instance.
+    
+    Args:
+        instance (object): This argmument define the lxc instance
+        domain_name (str): This argument is the domain name who will be associated.
+
+    Returns:
+        int: Return 1 if the function works successfully, otherwise 0.    
+    """
+
     resolution_file = open("simulation/workstations/"+instance.name+"/named.conf.local", "a+")
-    resolution_file.write("zone \""+ db_filename +"\" {\n")
+    resolution_file.write("zone \""+ domain_name +"\" {\n")
     resolution_file.write("type master;\n")
-    resolution_file.write("file \"/etc/bind/db."+db_filename+"\";\n")
+    resolution_file.write("file \"/etc/bind/db."+domain_name+"\";\n")
     resolution_file.write("};\n")
     resolution_file.close()
     if upload_file(instance, {"instance_path":"/etc/bind/named.conf.local", "host_manager_path":"simulation/workstations/"+instance.name+"/named.conf.local"}, verbose=False) == 1:
         return 1
     return 0
 
-def dns_installation(instance, arg, verbose=True):
-    """ Install bind9 package on the remote instance and configure name resolution for his own domain name """
+def dns_installation(instance: object, arg: dict, verbose: bool=True) -> int:
+    """ Install bind9 package on the remote instance and configure name resolution for his own domain name.
+
+    Args:
+        instance (object): This argmument define the lxc instance
+        arg (dict of str: Optional): This argument list maps arguments and their value.
+            {
+                domain_name (str): This argument is the domain name who will be associated with an ip.
+                ns (str): This argument specify the domain name of the DNS authority server for this domain.
+                ip_resolution (str): This argument is the ip associated to the domain name. 
+                forwarder (list of str): This argument is a list of ip address that the dns server can contact 
+                                         to find mapping between a domain name and an ip address that it doesn't know.
+
+            }
+        verbose (bool, optional): This argument define if the function prompt some informations during his execution. Default to True.
+
+    Returns:
+        int: Return 1 if the function works successfully, otherwise 0.
+    """
+
     if install(instance, {"module":"bind9"}, verbose=False) == 1:
         return 1
     # execute_command(instance, {"command":["truncate", "-s", "0", "/etc/bind/db.root"], "expected_exit_code":"0"}, verbose=False)
@@ -56,8 +95,24 @@ def dns_installation(instance, arg, verbose=True):
         print(Fore.GREEN+ "      Service bind9 has been installed and configured successfully!"+Style.RESET_ALL)
     return 0
 
-def dns_resolve_name(instance, arg, verbose=True):
-    """ Create file for name resolution and ip resolution and push it on the remote instance """
+def dns_resolve_name(instance: object, arg: dict, verbose: bool=True) -> int:
+    """ Add an association between an ip address and a domain name.
+    Args:
+        instance (object): This argmument define the lxc instance.
+        arg (dict of str: Optional): This argument list maps arguments and their value.
+            {
+                domain_name (str): This argument is the domain name who will be associated with an ip.
+                ns (str): This argument specify the domain name of the DNS authority server for this domain.
+                ip_resolution (str): This argument is the ip associated to the domain name.
+                mail (str): This argument specify if a MX record must be assigned to this domain name. 'true' value if yes, anyone else if false.
+                alias (list of str): This argument is a list of domaine name that are redirected to the domain name specified in yhe value 'domain_name'.
+
+            }
+        verbose (bool, optional): This argument define if the function prompt some informations during his execution. Default to True.
+
+    Returns:
+        int: Return 1 if the function works successfully, otherwise 0.
+    """
     install(instance, {"module":"dnsutils"}, verbose=False)
     # db config
     resolution_file = open("simulation/workstations/"+instance.name+"/db."+arg["domain_name"], "w")
