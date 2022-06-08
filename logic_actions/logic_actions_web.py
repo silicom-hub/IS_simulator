@@ -1,10 +1,20 @@
 """ This file contain function who configures web services """
+import os
 import time
 from colorama import Fore, Style
-from .logic_actions_utils import wget, create_execute_command_remote_bash, change_permission, change_fileorfolder_user_owner, change_fileorfolder_group_owner, update, install, upload_file, restart_service, delete_file, git_clone, execute_command
+from .logic_actions_utils import wget, clear_nameserver, create_execute_command_remote_bash, change_permission, change_fileorfolder_user_owner, change_fileorfolder_group_owner, update, install, upload_file, restart_service, delete_file, git_clone, execute_command, install_python_packages
 
-def install_web_server(instance, arg, verbose=True):
-    """ Install apache2 and copy web site project in /varwww/html in remote instance """
+def install_web_server(instance: object, arg: dict, verbose: bool=True):
+    """ Install apache2 and copy web site project in /var/www/html in remote instance 
+    instance (object): This argmument define the lxc instance.
+    arg (dict of str: Optional): This argument list maps arguments and their value.
+            {
+                website_project_name (str): directory path where is the main web project put in /var/www/html.
+            }
+    
+    Returns:
+        int: Return 1 if the function works successfully, otherwise 0.
+    """
     if install(instance, {"module":"apache2"}, verbose=False):
         return 1
     instance.files.recursive_put("templates/"+arg["website_project_name"], "/var/www/html")
@@ -14,8 +24,11 @@ def install_web_server(instance, arg, verbose=True):
         print(Fore.GREEN + "      Web server have been installed successfully!" + Style.RESET_ALL)
     return 0
 
-def install_dvwa(instance, verbose=True):
-    """ Install and configure DVWA web server """
+def install_dvwa(instance, verbose: bool=True):
+    """ Install and configure DVWA web server 
+    instance (object): This argmument define the lxc instance.
+    verbose (bool, optional): This argument define if the function prompt some informations during his execution. Default to True.
+    """
     if update(instance, verbose=False):
         return 1
     if install(instance, {"module":"nmap"}, verbose=False):
@@ -63,8 +76,21 @@ def install_dvwa(instance, verbose=True):
     print(Fore.RED + "      Error while copying config file of dvwa "+" ["+result.stderr+"]" + Style.RESET_ALL)
     return 1
 
-def enable_ssl(instance, arg, verbose=True):
-    """ Create certificate and encrypt web communication """
+def enable_ssl(instance, arg: dict, verbose: bool=True):
+    """ Create certificate and encrypt web communication. 
+    instance (object): This argmument define the lxc instance.
+    arg (dict of str: Optional): This argument list maps arguments and their value.
+            {
+                cert_path (str): Path to certficate file.
+                key_path (str): Path to private key file.
+                ca_dir (str): Directory path where private key and path are stored.
+                cas_path (list): List of public key who signed the certificate.
+            }
+    verbose (bool, optional): This argument define if the function prompt some informations during his execution. Default to True.
+
+    Returns:
+        int: Return 1 if the function works successfully, otherwise 0.
+    """
     execute_command(instance, {"command":["a2enmod", "ssl"], "expected_exit_code":"0"}, verbose=False)
     if restart_service(instance, {"service":"apache2"}, verbose=False):
         return 1
@@ -105,10 +131,110 @@ def enable_ssl(instance, arg, verbose=True):
         print(Fore.GREEN + "      Website has been secure by certificate: "+arg["cert_path"]+ Style.RESET_ALL)
     return 0
 
-    # {"name":"enable_ssl", "args": {"cert_path":"/certs/dvwa.silicom.com/dvwa.silicom.com.cert","key_path":"/certs/dvwa.silicom.com/dvwa.silicom.com.key","ca_dir":"/certs/dvwa.silicom.com/","cas_path":["/certs/dvwa.silicom.com/caroot.com.cert","/certs/dvwa.silicom.com/silicom.com.cert"]} },
+# {"name":"enable_ssl", "args": {"cert_path":"/certs/dvwa.silicom.com/dvwa.silicom.com.cert","key_path":"/certs/dvwa.silicom.com/dvwa.silicom.com.key","ca_dir":"/certs/dvwa.silicom.com/","cas_path":["/certs/dvwa.silicom.com/caroot.com.cert","/certs/dvwa.silicom.com/silicom.com.cert"]} },
 
-def install_chat_application(instance, verbose=True):
-    """ Install and configure chat web application """
+def install_pip_server(instance, arg: dict, verbose: bool=True):
+    """ Install and configure python repository with apache2.
+    instance (object): This argmument define the lxc instance.
+    arg (dict of str: Optional): This argument list maps arguments and their value.
+            {
+                cert_path (str): Path to certficate file.
+                key_path (str): Path to private key file.
+                ca_dir (str): Directory path where private key and path are stored.
+                cas_path (list): List of public key who signed the certificate.
+            }
+    verbose (bool, optional): This argument define if the function prompt some informations during his execution. Default to True.
+    
+    Returns:
+        int: Return 1 if the function works successfully, otherwise 0.
+    
+    """
+    if install_python_packages(instance, {"package":"virtualenv"}, verbose=False) == 1:
+        return 1
+    execute_command(instance, {"command":["mkdir","-p",arg["package_directory"]], "expected_exit_code":"0"}, verbose=False)
+
+    execute_command(instance, {"command":["virtualenv", arg["package_directory"]+"venv"], "expected_exit_code":"0"}, verbose=False)
+    if install_python_packages(instance, {"package":"pypiserver"}, verbose=False) == 1:
+        return 1
+    if install(instance, {"module":"apache2"}, verbose=False):
+        return 1
+    if install(instance, {"module":"libapache2-mod-wsgi-py3"}, verbose=False):
+        return 1
+    execute_command(instance, {"command":["a2enmod", "wsgi"], "expected_exit_code":"0"}, verbose=False)
+
+    pypiserver_wsgi = open("simulation/workstations/"+instance.name+"/pypiserver.wsgi", "w")
+    pypiserver_wsgi.write("import pypiserver \n")
+    pypiserver_wsgi.write("PACKAGES = '"+arg["package_directory"]+"' \n")
+    pypiserver_wsgi.write("application = pypiserver.app(root=PACKAGES, redirect_to_fallback=True) \n")
+    pypiserver_wsgi.close()
+    if upload_file(instance, {"instance_path":arg["package_directory"]+"pypiserver.wsgi", "host_manager_path":"simulation/workstations/"+instance.name+"/pypiserver.wsgi"}, verbose=False) == 1:
+        return 1
+
+    change_fileorfolder_user_owner(instance, {"new_owner":"www-data", "file_path":arg["package_directory"]}, verbose=False)
+    change_fileorfolder_group_owner(instance, {"new_group":"www-data", "fileorfolder_path":arg["package_directory"]}, verbose=False)
+
+    default_apache2_conf = open("simulation/workstations/"+instance.name+"/000-default.conf", "w")
+    if arg["ssl"] == "true":
+        default_apache2_conf.write("<VirtualHost *:443> \n")
+        default_apache2_conf.write("<IfModule mod_ssl.c> \n")
+        default_apache2_conf.write("    SSLEngine on\n")
+        default_apache2_conf.write("    SSLCertificateFile      /etc/ssl/certs/ssl-cert-snakeoil.pem\n")
+        default_apache2_conf.write("    SSLCertificateKeyFile   /etc/ssl/private/ssl-cert-snakeoil.key\n")
+        default_apache2_conf.write("</IfModule> \n")
+    else:
+        default_apache2_conf.write("<VirtualHost *:80> \n")
+    default_apache2_conf.write("     WSGIPassAuthorization On \n")
+    default_apache2_conf.write("     WSGIScriptAlias / "+arg["package_directory"]+"pypiserver.wsgi \n")
+    default_apache2_conf.write("     WSGIDaemonProcess pypiserver python-path="+arg["package_directory"]+":/root/venv/lib/python3.6/site-packages/ \n")
+    default_apache2_conf.write("     <Directory "+arg["package_directory"]+"> \n")
+    default_apache2_conf.write("         WSGIProcessGroup pypiserver \n")
+    default_apache2_conf.write("         Require all granted \n")
+    default_apache2_conf.write("     </Directory> \n")
+    default_apache2_conf.write("     ErrorLog ${APACHE_LOG_DIR}/error.log \n")
+    default_apache2_conf.write("     CustomLog ${APACHE_LOG_DIR}/access.log combined \n")
+    default_apache2_conf.write("</VirtualHost> \n")
+    default_apache2_conf.close()
+    if upload_file(instance, {"instance_path":"/etc/apache2/sites-available/000-default.conf", "host_manager_path":"simulation/workstations/"+instance.name+"/000-default.conf"}, verbose=False) == 1:
+        return 1
+    restart_service(instance, {"service":"apache2"}, verbose=False)
+    result = execute_command(instance, {"command":["a2enmod", "ssl"], "expected_exit_code":"0"}, verbose=False)
+    restart_service(instance, {"service":"apache2"}, verbose=False)
+
+def upload_pip_lib(instance, arg: dict, verbose: bool=True):
+    """ Upload and compress python project on pip repository.
+    instance (object): This argmument define the lxc instance.
+    arg (dict of str: Optional): This argument list maps arguments and their value.
+            {
+                pip_libs (list): List all packages uploads on the repository stored in the host manager in folder path 'pip_lib/'
+            }
+    verbose (bool, optional): This argument define if the function prompt some informations during his execution. Default to True.
+    
+    Returns:
+        int: Return 1 if the function works successfully, otherwise 0.
+    
+    """
+
+    for pip_lib in arg["pip_libs"]:
+        instance.execute(["mkdir", "/pypiserver/packages/"+pip_lib+"/"])
+        instance.execute(["mkdir", "/pypiserver/packages/"+pip_lib+"/"+pip_lib+"/"])
+        upload_file(instance, {"instance_path":"/pypiserver/packages/"+pip_lib+"/setup.py","host_manager_path":"pip_lib/"+pip_lib+"/setup.py"}, verbose=False)
+        upload_file(instance, {"instance_path":"/pypiserver/packages/"+pip_lib+"/setup.cfg","host_manager_path":"pip_lib/"+pip_lib+"/setup.cfg"}, verbose=False)
+        upload_file(instance, {"instance_path":"/pypiserver/packages/"+pip_lib+"/README.md","host_manager_path":"pip_lib/"+pip_lib+"/README.md"}, verbose=False)
+        for file in os.listdir("pip_lib/"+pip_lib+"/"+pip_lib+"/"):
+            upload_file(instance, {"instance_path":"/pypiserver/packages/"+pip_lib+"/"+pip_lib+"/"+file,"host_manager_path":"pip_lib/"+pip_lib+"/"+pip_lib+"/"+file}, verbose=False)
+        create_execute_command_remote_bash(instance, {"script_name":"update_main_cf.sh", "commands":[
+                                                                                                "cd /pypiserver/packages/"+pip_lib+" && python3 setup.py sdist"
+                                                                                                # "cp /pypiserver/packages/"+pip_lib+"/dist/* /pypiserver/packages/"
+                                                                                                    ], "delete":"false"}, verbose=False)
+
+def install_chat_application(instance, verbose: bool=True):
+    """ Install and configure chat web application 
+    instance (object): This argmument define the lxc instance.
+    verbose (bool, optional): This argument define if the function prompt some informations during his execution. Default to True.
+    Returns:
+        int: Return 1 if the function works successfully, otherwise 0.
+    
+    """
     if install(instance, {"module":"git"}, verbose=False):
         return 1
     if install(instance, {"module":"apache2"}, verbose=False):
@@ -142,8 +268,20 @@ def install_chat_application(instance, verbose=True):
     if verbose:
         print(Fore.GREEN + "      Chat application has been installed and configured successfully!" + Style.RESET_ALL)
 
-def install_gnu_social_network(instance, arg, verbose=True):
-    """ Install and configure gnu social web application """
+def install_gnu_social_network(instance, arg: dict, verbose: bool=True):
+    """ Install and configure gnu social web application 
+    instance (object): This argmument define the lxc instance.
+    arg (dict of str: Optional): This argument list maps arguments and their value.
+            {
+                server_ip (str): Define the website public ip in the config file config.php.
+                domain_name (str): Define the website domain name in the config file config.php.
+            }
+    verbose (bool, optional): This argument define if the function prompt some informations during his execution. Default to True.
+    
+    Returns:
+        int: Return 1 if the function works successfully, otherwise 0.
+    
+    """
     install(instance, {"module":"curl"}, verbose=False)
     install(instance, {"module":"wget"}, verbose=False)
     install(instance, {"module":"git"}, verbose=False)
@@ -196,6 +334,52 @@ def install_gnu_social_network(instance, arg, verbose=True):
     if upload_file(instance, {"instance_path":"/var/www/html/config.php", "host_manager_path":"simulation/workstations/"+instance.name+"/config.php"}, verbose=False) == 1:
         return 1
 
+def install_food_delivery_application(instance, arg: dict, verbose: bool=True):
+    """ Install and configure gnu social web application 
+    instance (object): This argmument define the lxc instance.
+    arg (dict of str: Optional): This argument list maps arguments and their value.
+            {
+                server_ip (str): Define the website public ip in the config file config.php.
+                port_server (str): Define the website domain name in the config file config.php.
+                domain_name (str): 
+            }
+    verbose (bool, optional): This argument define if the function prompt some informations during his execution. Default to True.
+    
+    Returns:
+        int: Return 1 if the function works successfully, otherwise 0.
+    
+    """
+    install(instance, {"module":"python3-pip"}, verbose=False)
+    git_clone(instance, {"branch":"master", "repository":"https://github.com/ChanduArepalli/Django-Online-Food-Delivery.git", "instance_path":"/root/delivery"}, verbose=False)
+    execute_command(instance, {"command":["sed", "-i", "6iimport six", "/root/delivery/manage.py"], "expected_exit_code":"0"}, verbose=False)
+    requirement = open("simulation/workstations/"+instance.name+"/requirements.txt", "w")
+    requirement.write("Django\ndjango-crispy-forms\ndjango-currentuser\ndjango-extensions\nPillow\npytz\nsix\nsqlparse\n")
+    requirement.close()
+    if upload_file(instance, {"instance_path":"/root/delivery/requirements.txt", "host_manager_path":"simulation/workstations/"+instance.name+"/requirements.txt"}, verbose=False) == 1:
+        return 1
+
+    install_python_packages(instance, {"package":"/root/delivery/requirements.txt"}, verbose=False)
+    create_execute_command_remote_bash(instance, {"script_name":"food_delivery.sh", "commands":[
+                                                                                                   "sed -i -e \'s|ALLOWED_HOSTS = \[\]|ALLOWED_HOSTS = \[\"*\"\]|\' /root/delivery/Online_Food_Delivery/settings.py",
+                                                                                                ], "delete":"false"}, verbose=False)
+    clear_nameserver(instance, verbose=False)
+
+    service = open("simulation/workstations/"+instance.name+"/delivery_food.service", "w")
+    service.write("[Unit]\n")
+    service.write("Description=Delivery food service\n")
+    service.write("[Service]\n")
+    service.write("Type=simple\n")
+    service.write("ExecStart=/usr/bin/python3 /root/delivery/manage.py runserver "+arg["ip_server"]+":"+arg["port_server"]+"\n")
+    service.write("[Install]\n")
+    service.write("WantedBy=multi-user.target\n")
+    service.close()
+    if upload_file(instance, {"instance_path":"/lib/systemd/system/delivery_food.service", "host_manager_path":"simulation/workstations/"+instance.name+"/delivery_food.service"}, verbose=False) == 1:
+        return 1
+    execute_command(instance, {"command":["systemctl", "daemon-reload"], "expected_exit_code":"0"}, verbose=False)
+    if restart_service(instance, {"service":"delivery_food"}, verbose=False):
+        return 1
 
 # {"name":"install_gnu_social_network", "args": {"username":"user1","password":"user123"} },
 # {"name":"enable_ssl", "args": {"cert_path":"/certs/dvwa.silicom.com/dvwa.silicom.com.cert","key_path":"/certs/dvwa.silicom.com/dvwa.silicom.com.key","ca_dir":"/certs/dvwa.silicom.com/","cas_path":["/certs/dvwa.silicom.com/caroot.com.cert","/certs/dvwa.silicom.com/silicom.com.cert"]} },
+
+#{"name":"enable_ssl", "args": {"cert_path":"/certs/pypi.org/pypi.org.cert","key_path":"/certs/pypi.org/pypi.org.key","ca_dir":"/certs/pypi.org/","cas_path":["/certs/pypi.org/caroot.com.cert","/certs/pypi.org/mediacorp.com.cert"]} },

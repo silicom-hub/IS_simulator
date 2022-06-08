@@ -21,16 +21,27 @@
                     {"name":"install", "args": {"module":"iptables"} },
                     {"name":"execute_command", "args": {"command":["iptables", "-t", "nat", "-A", "PREROUTING", "-i", "eth1", "-p", "tcp", "--dport", "25", "-j", "DNAT", "--to", "192.168.1.12:25"], "expected_exit_code":"0"} },             
                     {"name":"execute_command", "args": {"command":["iptables", "-t", "nat", "-A", "PREROUTING", "-i", "eth1", "-p", "tcp", "--dport", "143", "-j", "DNAT", "--to", "192.168.1.12:143"], "expected_exit_code":"0"} },  
-                    {"name":"execute_command", "args": {"command":["iptables", "-t", "nat", "-A", "PREROUTING", "-i", "eth1", "-p", "tcp", "--dport", "443", "-j", "DNAT", "--to", "192.168.1.15:443"], "expected_exit_code":"0"} }, 
+                    {"name":"execute_command", "args": {"command":["iptables", "-t", "nat", "-A", "PREROUTING", "-i", "eth1", "-p", "tcp", "--dport", "443", "-j", "DNAT", "--to", "192.168.1.15:443"], "expected_exit_code":"0"} },
                     {"name":"execute_command", "args": {"command":["iptables", "-t", "nat", "-A", "POSTROUTING", "-o", "eth1", "-j", "MASQUERADE"], "expected_exit_code":"0"} },
-                    {"name":"rsyslog_client", "args": {"ip_log_server":"192.168.1.11","log_files":["authentication","suricata"]} }
+                    {"name":"configure_iptables_logs", "args": {"interfaces":["eth1", "eth2"]} },
+                    {"name":"rsyslog_client", "args": {"ip_log_server":"1.1.1.17","log_files":["iptables"]} }
                     ] },
     
         { "hostname": "routerInternationalcorpNetwork", "actions": [
                     {"name":"install", "args": {"module":"iptables"} },
                     {"name":"execute_command", "args": {"command":["iptables", "-t", "nat", "-A", "PREROUTING", "-i", "eth1", "-p", "tcp", "--dport", "25", "-j", "DNAT", "--to", "192.168.2.12:25"], "expected_exit_code":"0"} },             
                     {"name":"execute_command", "args": {"command":["iptables", "-t", "nat", "-A", "PREROUTING", "-i", "eth1", "-p", "tcp", "--dport", "143", "-j", "DNAT", "--to", "192.168.2.12:143"], "expected_exit_code":"0"} },  
-                    {"name":"execute_command", "args": {"command":["iptables", "-t", "nat", "-A", "PREROUTING", "-i", "eth1", "-p", "tcp", "--dport", "443", "-j", "DNAT", "--to", "192.168.2.15:443"], "expected_exit_code":"0"} }, 
+                    {"name":"execute_command", "args": {"command":["iptables", "-t", "nat", "-A", "PREROUTING", "-i", "eth1", "-p", "tcp", "--dport", "80", "-j", "DNAT", "--to", "192.168.2.15:80"], "expected_exit_code":"0"} }, 
+                    {"name":"execute_command", "args": {"command":["iptables", "-t", "nat", "-A", "PREROUTING", "-i", "eth1", "-p", "tcp", "--dport", "8081", "-j", "DNAT", "--to", "192.168.2.31:8081"], "expected_exit_code":"0"} }, 
+                    {"name":"execute_command", "args": {"command":["iptables", "-t", "nat", "-A", "POSTROUTING", "-o", "eth1", "-j", "MASQUERADE"], "expected_exit_code":"0"} },
+                    {"name":"configure_iptables_logs", "args": {"interfaces":["eth1", "eth2"]} },
+                    {"name":"rsyslog_client", "args": {"ip_log_server":"192.168.2.11","log_files":["iptables"]} }
+                    ] },
+
+        { "hostname": "routerOrg", "actions": [
+                    {"name":"install", "args": {"module":"iptables"} },
+                    {"name":"execute_command", "args": {"command":["iptables", "-t", "nat", "-A", "PREROUTING", "-i", "eth1", "-p", "tcp", "--dport", "53",  "-j", "DNAT", "--to", "10.10.11.14:53"]  , "expected_exit_code":"0"} },             
+                    {"name":"execute_command", "args": {"command":["iptables", "-t", "nat", "-A", "PREROUTING", "-i", "eth1", "-p", "tcp", "--dport", "443", "-j", "DNAT", "--to", "10.10.11.15:443"], "expected_exit_code":"0"} }, 
                     {"name":"execute_command", "args": {"command":["iptables", "-t", "nat", "-A", "POSTROUTING", "-o", "eth1", "-j", "MASQUERADE"], "expected_exit_code":"0"} },
                     {"name":"rsyslog_client", "args": {"ip_log_server":"192.168.2.11","log_files":["authentication","suricata"]} }
                     ] },
@@ -38,6 +49,11 @@
         { "hostname": "dns", "actions": [
                     {"name":"clear_nameserver"},
                     {"name":"dns_installation", "args": {"domain_name":"com","ns":"ns.com","ip_resolution":"1.1.1.14", "forwarders":[]} },
+                    {"name":"dns_resolve_name", "args": {"domain_name": "hacker.com",
+                                                            "ns":"ns.com",
+                                                            "ip_resolution":"1.1.1.40",
+                                                            "mail":"",
+                                                            "alias":[""]} },
                     {"name":"dns_resolve_name", "args": {"domain_name": "host.com",
                                                             "ns":"ns.com",
                                                             "ip_resolution":"1.1.1.2",
@@ -52,18 +68,31 @@
                                                             "ns":"ns.com",
                                                             "ip_resolution":"1.1.1.4",
                                                             "mail":"",
-                                                            "alias":["www"]} }
+                                                            "alias":["crm"]} },
+                    {"name":"dns_resolve_name", "args": {"domain_name": "org",
+                                                            "ns":"ns.com",
+                                                            "ip_resolution":"1.1.1.5",
+                                                            "mail":"",
+                                                            "alias":["pypi"]} }
+                    ] },
+
+        { "hostname": "elk", "actions": [
+                    {"name":"clear_nameserver"},
+                    {"name":"install_elk", "args": {"logstash":"true","elasticsearch":"true","kibana":"true",
+                                                    "fqdn_host":"elk.com","ip_fqdn":"1.1.1.17",
+                                                    "admin_name":"kadmin","admin_passwd":"kadmin123"} },
+                    {"name":"add_nameserver", "args": {"nameserver_ip":"1.1.1.14"} }
                     ] },
 
         { "hostname": "hacker", "actions": [  
                     {"name":"clear_nameserver"},
                     {"name":"create_local_user", "args": {"username":"hacker","password":"hacker123"} },
                     {"name":"push_sim_user"},
+                    {"name":"rsyslog_client", "args": {"ip_log_server":"1.1.1.17","log_files":["hacker"]} },
                     {"name":"add_nameserver", "args": {"nameserver_ip":"1.1.1.14"} }
-                    ] },
-        
-        
-        
+                    ] },    
+
+                    
         
         { "hostname": "dnsIPN", "actions": [
                     {"name":"clear_nameserver"},
@@ -92,6 +121,7 @@
                     {"name":"generate_certificates", "args": {"ca_holder":"dnsIPN","ca_name":"caroot.com","middle_holder":"dnsIPN","middle_name":"mediacorp.com","private_key_certificate_name":"whatsoup.com","bits":"2048","version":"2","serial":"","C":"FR","ST":"France","L":"Bordeaux","O":"Whatsoup","CN":"*.whatsoup.com","days_validity":"360","dns":"whatsoup.com"} },
                     {"name":"install_chat_application", "args": {"":""} },
                     {"name":"enable_ssl", "args": {"cert_path":"/certs/whatsoup.com/whatsoup.com.cert","key_path":"/certs/whatsoup.com/whatsoup.com.key","ca_dir":"/certs/whatsoup.com/","cas_path":["/certs/whatsoup.com/caroot.com.cert","/certs/whatsoup.com/mediacorp.com.cert"]} },
+                    {"name":"rsyslog_client", "args": {"ip_log_server":"1.1.1.17","log_files":["apache2-access", "apache2-error"]} },
                     {"name":"add_nameserver", "args": {"nameserver_ip":"10.10.10.14"} }
                     ] },
 
@@ -100,6 +130,7 @@
                     {"name":"generate_certificates", "args": {"ca_holder":"dnsIPN","ca_name":"caroot.com","middle_holder":"dnsIPN","middle_name":"mediacorp.com","private_key_certificate_name":"twitteur.com","bits":"2048","version":"2","serial":"","C":"FR","ST":"France","L":"Bordeaux","O":"Twitteur","CN":"*.twitteur.com","days_validity":"360","dns":"twitteur.com"} },
                     {"name":"install_gnu_social_network", "args": {"server_ip":"10.10.10.16", "domain_name":"twitteur.com"} },
                     {"name":"enable_ssl", "args": {"cert_path":"/certs/twitteur.com/twitteur.com.cert","key_path":"/certs/twitteur.com/twitteur.com.key","ca_dir":"/certs/twitteur.com/","cas_path":["/certs/twitteur.com/caroot.com.cert","/certs/twitteur.com/mediacorp.com.cert"]} },
+                    {"name":"rsyslog_client", "args": {"ip_log_server":"1.1.1.17","log_files":["apache2-access", "apache2-error"]} },
                     {"name":"add_nameserver", "args": {"nameserver_ip":"10.10.10.14"} }
                     ] },
 
@@ -116,7 +147,8 @@
                                                                                     {"email":"hacker@host.com"  , "password":"hacker123"}]}, 
                                                                     "ssl":{"cert_path":"/certs/jmail.host.com/jmail.host.com.cert", "key_path":"/certs/jmail.host.com/jmail.host.com.key", "ca_dir":"/certs/jmail.host.com/", "cas_path":["/certs/jmail.host.com/caroot.com.cert", "/certs/jmail.host.com/mediacorp.com.cert"]}}},
                     {"name":"add_nameserver", "args": {"nameserver_ip":"10.10.10.14"} },
-                    {"name":"execute_command", "args": {"command":["systemctl", "restart", "postfix"], "expected_exit_code":"0"} }
+                    {"name":"execute_command", "args": {"command":["systemctl", "restart", "postfix"], "expected_exit_code":"0"} },
+                    {"name":"rsyslog_client", "args": {"ip_log_server":"1.1.1.17","log_files":["mail"]} }
                     ] },
 
         { "hostname": "workstationIPN1", "actions": [  
@@ -146,6 +178,7 @@
 
         { "hostname": "dnsMycompany", "actions": [
                         {"name":"clear_nameserver"},
+                        {"name":"generate_middle_certificates", "args": {"ca_holder":"dnsIPN","ca_name":"caroot.com","private_key_middle_certificate_name":"mycompany.com","bits":"2048","version":"2","serial":"","C":"FR","ST":"France","L":"Paris","O":"Mycompany","CN":"mycompany.com","days_validity":"360"} },
                         {"name":"dns_installation", "args": {"domain_name":"mycompany.com", "ns":"ns.mycomapny.com","ip_resolution":"192.168.1.14","forwarders":["1.1.1.14"]} },
                         {"name":"dns_resolve_name", "args": {"domain_name": "mycompany.com",
                                                                 "ns":"dns.mycomapny.com",
@@ -166,10 +199,13 @@
 
         { "hostname": "ldapMycompany", "actions": [
                         {"name":"clear_nameserver"},
+                        {"name":"configure_iptables_logs", "args": {"interfaces":["eth1"]} },
+                        {"name":"generate_certificates", "args": {"ca_holder":"dnsIPN","ca_name":"caroot.com","middle_holder":"dnsIPN","middle_name":"mediacorp.com","private_key_certificate_name":"ldap.mycompany.com","bits":"2048","version":"2","serial":"","C":"FR","ST":"France","L":"Guyancourt","O":"Mycompany","CN":"*.ldap.mycompany.com","days_validity":"360","dns":"ldap.mycompany.com"} },
                         {"name":"ldap_create_domaine","args": {"root_password":"admin123" ,
                                                                 "domaine_name":"mycompany.com",
                                                                 "domain":"dc=mycompany,dc=com",
                                                                 "organization":"Mycompany",
+                                                                "tls":{"folder":"/certs/ldap.mycompany.com/", "CA":"/certs/ldap.mycompany.com/mediacorp.com.cert", "key":"/certs/ldap.mycompany.com/ldap.mycompany.com.key", "cert":"/certs/ldap.mycompany.com/ldap.mycompany.com.cert"},
                                                                 "ip_log_server":"192.168.1.11"} },
                         {"name":"ldap_add_user", "args": {"username":"ceo",
                                                             "objectClass":["top", "inetOrgPerson", "posixAccount"], 
@@ -205,12 +241,12 @@
                                                             "uidNumber":"1503",
                                                             "gidNumber":"103"} },
                         {"name":"add_nameserver", "args": {"nameserver_ip":"192.168.1.14"} },
-                        {"name":"rsyslog_client", "args": {"ip_log_server":"192.168.1.11","log_files":["ldap"]} }
-        
+                        {"name":"rsyslog_client", "args": {"ip_log_server":"1.1.1.17","log_files":["ldap", "iptables"]} }
                         ] },
 
         { "hostname": "mailMycompany", "actions": [
                         {"name":"clear_nameserver"},
+                        {"name":"configure_iptables_logs", "args": {"interfaces":["eth1"]} },
                         {"name":"install", "args": {"module":"telnet"} },
                         {"name":"generate_certificates", "args": {"ca_holder":"dnsIPN","ca_name":"caroot.com","middle_holder":"dnsIPN","middle_name":"mediacorp.com","private_key_certificate_name":"mail.mycompany.com","bits":"2048","version":"2","serial":"","C":"FR","ST":"France","L":"Guyancourt","O":"Mycompany","CN":"*.mail.mycompany.com","days_validity":"360","dns":"mail.mycompany.com"} },
                         {"name":"original_mail_installation", "args": {"domain_name":"mycompany.com",
@@ -221,47 +257,45 @@
                                                                                "ldap_dn":"dc=mycompany,dc=com", 
                                                                                "ldap_manager":"cn=admin,dc=mycompany,dc=com", 
                                                                                "ldap_manager_password":"admin123",
-                                                                               "ldap_port":"389",
-                                                                               "domain_name":"mycompany.com"},
+                                                                               "ldap_port":"636",
+                                                                               "domain_name":"mycompany.com",
+                                                                               "ssl":"true"
+                                                                            },
                                                                         "sql":{}, 
                                                                         "ssl":{"cert_path":"/certs/mail.mycompany.com/mail.mycompany.com.cert", "key_path":"/certs/mail.mycompany.com/mail.mycompany.com.key", "ca_dir":"/certs/mail.mycompany.com/", "cas_path":["/certs/mail.mycompany.com/caroot.com.cert", "/certs/mail.mycompany.com/mediacorp.com.cert"]}}},
                         {"name":"add_nameserver", "args": {"nameserver_ip":"192.168.1.14"} },
+                        {"name":"rsyslog_client", "args": {"ip_log_server":"1.1.1.17","log_files":["mail", "iptables"]} },
                         {"name":"execute_command", "args": {"command":["systemctl", "restart", "postfix"], "expected_exit_code":"0"} }
                         ] },
 
         { "hostname": "intranetMycompany", "actions": [
                         {"name":"clear_nameserver"},
+                        {"name":"configure_iptables_logs", "args": {"interfaces":["eth1"]} },
                         {"name":"generate_certificates", "args": {"ca_holder":"dnsIPN","ca_name":"caroot.com","middle_holder":"dnsIPN","middle_name":"mediacorp.com","private_key_certificate_name":"intranet.mycompany.com","bits":"2048","version":"2","serial":"","C":"FR","ST":"France","L":"Guyancourt","O":"Mycompany","CN":"*.intranet.mycompany.com","days_validity":"360","dns":"intranet.mycompany.com"} },
                         {"name":"install_dvwa"},
                         {"name":"enable_ssl", "args": {"cert_path":"/certs/intranet.mycompany.com/intranet.mycompany.com.cert","key_path":"/certs/intranet.mycompany.com/intranet.mycompany.com.key","ca_dir":"/certs/intranet.mycompany.com/","cas_path":["/certs/intranet.mycompany.com/caroot.com.cert","/certs/intranet.mycompany.com/mediacorp.com.cert"]} },
-                        {"name":"configure_iptables", "args": {"":""} },
-                        {"name":"rsyslog_client", "args": {"ip_log_server":"192.168.1.11","log_files":["authentication","apache2"]} }
+                        {"name":"rsyslog_client", "args": {"ip_log_server":"1.1.1.17","log_files":["iptables","apache2-access", "apache2-error"]} }
                         ] },
 
         { "hostname": "sambaMycompany", "actions": [
                         {"name":"clear_nameserver"},
+                        {"name":"configure_iptables_logs", "args": {"interfaces":["eth1"]} },
                         {"name":"install_samba", "args": {"":""} },
                         {"name":"add_share_file", "args": {"share_file_name":"shareFile","comment":"Fichier partage mycompany!",
                                                             "private":"true","browseable":"yes","writable":"yes","valid_users":["ceo","dsi","intern"],
                                                             "users":[["ceo","ceo123"],["dsi","dsi123"],["intern","intern123"]]} },
                         {"name":"fail2ban_installation_configuration", "args": {"services":[{"name":"samba", "bantime":"30m", "findtime":"5m", "maxretry":"3"}]} },
-                        {"name":"rsyslog_client", "args": {"ip_log_server":"192.168.1.11","log_files":["samba","authentication"]} }
+                        {"name":"rsyslog_client", "args": {"ip_log_server":"1.1.1.17","log_files":["samba","iptables"]} }
                         ] },
 
-        { "hostname": "elkMycompany", "actions": [
-                        {"name":"clear_nameserver"},
-                        {"name":"install_elk", "args": {"logstash":"true","elasticsearch":"false","kibana":"false",
-                                                        "fqdn_host":"elk.mycompany.com","ip_fqdn":"192.168.1.11",
-                                                        "admin_name":"kadmin","admin_passwd":"kadmin123"} },
-                        {"name":"add_nameserver", "args": {"nameserver_ip":"10.10.10.14"} }
-                        ] },
 
         { "hostname": "workstation1Mycompany", "actions": [  
                         {"name":"clear_nameserver"},
                         {"name":"ldap_client_config", "args": {"ldap_ip":"192.168.1.10", 
                                                                 "base":"dc=mycompany,dc=com", 
                                                                 "uri":"uri ldap://mycompany.com/", 
-                                                                "ldap_admin":"cn=admin,dc=mycompany,dc=com"} },
+                                                                "ldap_admin":"cn=admin,dc=mycompany,dc=com",
+                                                                "tls":"true"} },
                         {"name":"install", "args": {"module":"nmap"} },
                         {"name":"push_sim_user"},
                         {"name":"add_nameserver", "args": {"nameserver_ip":"192.168.1.14"} }
@@ -272,7 +306,8 @@
                         {"name":"ldap_client_config", "args": {"ldap_ip":"192.168.1.10", 
                                                                 "base":"dc=mycompany,dc=com", 
                                                                 "uri":"uri ldap://mycompany.com/", 
-                                                                "ldap_admin":"cn=admin,dc=mycompany,dc=com"} },
+                                                                "ldap_admin":"cn=admin,dc=mycompany,dc=com",
+                                                                "tls":"true"} },
                         {"name":"install", "args": {"module":"nmap"} },
                         {"name":"push_sim_user"},
                         {"name":"add_nameserver", "args": {"nameserver_ip":"192.168.1.14"} }
@@ -283,7 +318,8 @@
                         {"name":"ldap_client_config", "args": {"ldap_ip":"192.168.1.10", 
                                                                 "base":"dc=mycompany,dc=com", 
                                                                 "uri":"uri ldap://mycompany.com/", 
-                                                                "ldap_admin":"cn=admin,dc=mycompany,dc=com"} },
+                                                                "ldap_admin":"cn=admin,dc=mycompany,dc=com",
+                                                                "tls":"true"} },
                         {"name":"push_sim_user"},
                         {"name":"add_nameserver", "args": {"nameserver_ip":"192.168.1.14"} }
                         ] },
@@ -295,7 +331,7 @@
                         {"name":"clear_nameserver"},
                         {"name":"generate_middle_certificates", "args": {"ca_holder":"dnsIPN","ca_name":"caroot.com","private_key_middle_certificate_name":"internationalcorp.com","bits":"2048","version":"2","serial":"","C":"FR","ST":"France","L":"Paris","O":"International Corp","CN":"internationalcorp.com","days_validity":"360"} },
                         {"name":"dns_installation", "args": {"domain_name":"internationalcorp.com", "ns":"ns.internationalcorp.com","ip_resolution":"192.168.2.14", "forwarders":["1.1.1.14"]} },
-                        {"name":"dns_resolve_name", "args": {"domain_name": "intranet.internationalcorp.com",
+                        {"name":"dns_resolve_name", "args": {"domain_name": "crm.internationalcorp.com",
                                                                 "ns":"ns.host.com",
                                                                 "ip_resolution":"192.168.2.15",
                                                                 "mail":"",
@@ -314,10 +350,13 @@
 
         { "hostname": "ldapInternationalcorp", "actions": [
                         {"name":"clear_nameserver"},
+                        {"name":"configure_iptables_logs", "args": {"interfaces":["eth1"]} },
+                        {"name":"generate_certificates", "args": {"ca_holder":"dnsIPN","ca_name":"caroot.com","middle_holder":"dnsInternationalcorp","middle_name":"internationalcorp.com","private_key_certificate_name":"ldap.internationalcorp.com","bits":"2048","version":"2","serial":"","C":"FR","ST":"France","L":"Paris","O":"International Corp","CN":"*.ldap.internationalcorp.com","days_validity":"360","dns":"ldap.internationalcorp.com"} },
                         {"name":"ldap_create_domaine","args": {"root_password":"admin123" ,
                                                                 "domaine_name":"internationalcorp.com",
                                                                 "domain":"dc=internationalcorp,dc=com",
                                                                 "organization":"Internationalcorp",
+                                                                "tls":{"folder":"/certs/ldap.internationalcorp.com/", "CA":"/certs/ldap.internationalcorp.com/internationalcorp.com.cert", "key":"/certs/ldap.internationalcorp.com/ldap.internationalcorp.com.key", "cert":"/certs/ldap.internationalcorp.com/ldap.internationalcorp.com.cert"},
                                                                 "ip_log_server":"192.168.2.11"} },
                         {"name":"ldap_add_user", "args": {"username":"pdg",
                                                             "objectClass":["top", "inetOrgPerson", "posixAccount"], 
@@ -386,12 +425,13 @@
                                                             "uidNumber":"1506",
                                                             "gidNumber":"106"} },
                         {"name":"add_nameserver", "args": {"nameserver_ip":"192.168.2.14"} },
-                        {"name":"rsyslog_client", "args": {"ip_log_server":"192.168.2.11","log_files":["ldap", "authentication"]} }
+                        {"name":"rsyslog_client", "args": {"ip_log_server":"1.1.1.17","log_files":["ldap", "iptables"]} }
             
                         ] },
 
         { "hostname": "mailInternationalcorp", "actions": [
                         {"name":"clear_nameserver"},
+                        {"name":"configure_iptables_logs", "args": {"interfaces":["eth1"]} },
                         {"name":"generate_certificates", "args": {"ca_holder":"dnsIPN","ca_name":"caroot.com","middle_holder":"dnsInternationalcorp","middle_name":"internationalcorp.com","private_key_certificate_name":"mail.internationalcorp.com","bits":"2048","version":"2","serial":"","C":"FR","ST":"France","L":"Paris","O":"International Corp","CN":"*.mail.internationalcorp.com","days_validity":"360","dns":"mail.internationalcorp.com"} },
                         {"name":"original_mail_installation", "args": {"domain_name":"internationalcorp.com",
                                                                         "networks":["192.168.2.0/24"],
@@ -401,100 +441,71 @@
                                                                                 "ldap_dn":"dc=internationalcorp,dc=com", 
                                                                                 "ldap_manager":"cn=admin,dc=internationalcorp,dc=com", 
                                                                                 "ldap_manager_password":"admin123",
-                                                                                "ldap_port":"389",
-                                                                                "domain_name":"internationalcorp.com"},
+                                                                                "ldap_port":"636",
+                                                                                "domain_name":"internationalcorp.com",
+                                                                                "ssl":"true"
+                                                                            },
                                                                         "sql":{}, 
                                                                         "ssl":{"cert_path":"/certs/mail.internationalcorp.com/mail.internationalcorp.com.cert", "key_path":"/certs/mail.internationalcorp.com/mail.internationalcorp.com.key", "ca_dir":"/certs/mail.internationalcorp.com/", "cas_path":["/certs/mail.internationalcorp.com/caroot.com.cert", "/certs/mail.internationalcorp.com/internationalcorp.com.cert"]}}},
                         {"name":"add_nameserver", "args": {"nameserver_ip":"192.168.2.14"} },
-                        {"name":"execute_command", "args": {"command":["systemctl", "restart", "postfix"], "expected_exit_code":"0"} }
+                        {"name":"execute_command", "args": {"command":["systemctl", "restart", "postfix"], "expected_exit_code":"0"} },
+                        {"name":"rsyslog_client", "args": {"ip_log_server":"1.1.1.17","log_files":["mail", "iptables"]} }
                         ] },
 
-        { "hostname": "intranetInternationalcorp", "actions": [
+        { "hostname": "foodDelivery", "actions": [
                         {"name":"clear_nameserver"},
-                        {"name":"generate_certificates", "args": {"ca_holder":"dnsIPN","ca_name":"caroot.com","middle_holder":"dnsInternationalcorp","middle_name":"internationalcorp.com","private_key_certificate_name":"intranet.internationalcorp.com","bits":"2048","version":"2","serial":"","C":"FR","ST":"France","L":"Paris","O":"InternationalCorp","CN":"*.intranet.internationalcorp.com","days_validity":"360","dns":"intranet.internationalcorp.com"} },
-                        {"name":"install_dvwa"},
-                        {"name":"enable_ssl", "args": {"cert_path":"/certs/intranet.internationalcorp.com/intranet.internationalcorp.com.cert","key_path":"/certs/intranet.internationalcorp.com/intranet.internationalcorp.com.key","ca_dir":"/certs/intranet.internationalcorp.com/","cas_path":["/certs/intranet.internationalcorp.com/caroot.com.cert","/certs/intranet.internationalcorp.com/internationalcorp.com.cert"]} },
-                        {"name":"configure_iptables", "args": {"":""} },
-                        {"name":"rsyslog_client", "args": {"ip_log_server":"192.168.2.11","log_files":["authentication","apache2"]} }
+                        {"name":"configure_iptables_logs", "args": {"interfaces":["eth1"]} },
+                        {"name":"create_local_user", "args": {"username":"admin","password":"admin"} },
+                        {"name":"add_user2group", "args": {"group_name":"sudo", "username":"admin"} },
+                        {"name":"install_openssh_server", "args": {"":""} },
+                        {"name":"install_food_delivery_application", "args": {"ip_server":"192.168.2.15", "port_server":"80", "domain_name":"crm.internationalcorp.org"} },
+                        {"name":"rsyslog_client", "args": {"ip_log_server":"1.1.1.17","log_files":["apache2_access", "iptables"]} },
+                        {"name":"add_nameserver", "args": {"nameserver_ip":"192.168.2.14"} }
                         ] },
 
         { "hostname": "sambaInternationalcorp", "actions": [
                         {"name":"clear_nameserver"},
+                        {"name":"configure_iptables_logs", "args": {"interfaces":["eth1"]} },
                         {"name":"install_samba", "args": {"":""} },
                         {"name":"add_share_file", "args": {"share_file_name":"shareFile","comment":"Fichier partage mycompany!",
                                                             "private":"true","browseable":"yes","writable":"yes","valid_users":["pdg","employee1","employee2","employee3","employee4","employee5"],
                                                             "users":[["pdg","pdg123"],["employee1","employee1123"],["employee2","employee2123"],["employee3","employee3123"],["employee4","employee4123"],["employee5","employee5123"]]} },
                         {"name":"fail2ban_installation_configuration", "args": {"services":[{"name":"samba", "bantime":"30m", "findtime":"5m", "maxretry":"3"}]} },
-                        {"name":"rsyslog_client", "args": {"ip_log_server":"192.168.2.11","log_files":["samba","authentication"]} }
-                        ] },
-
-        { "hostname": "elkInternationalcorp", "actions": [
-                        {"name":"clear_nameserver"},
-                        {"name":"install_elk", "args": {"logstash":"true","elasticsearch":"false","kibana":"false",
-                                                        "fqdn_host":"elk.internationalcorp.com","ip_fqdn":"192.168.2.11",
-                                                        "admin_name":"kadmin","admin_passwd":"kadmin123"} },
-                        {"name":"add_nameserver", "args": {"nameserver_ip":"192.168.2.14"} }
+                        {"name":"rsyslog_client", "args": {"ip_log_server":"1.1.1.17","log_files":["samba","iptables"]} }
                         ] },
 
         { "hostname": "workstation1Internationalcorp", "actions": [  
-                        {"name":"clear_nameserver"},
-                        {"name":"ldap_client_config", "args": {"ldap_ip":"192.168.2.10", 
-                                                                "base":"dc=internationalcorp,dc=com", 
-                                                                "uri":"uri ldap://internationalcorp.com/", 
-                                                                "ldap_admin":"cn=admin,dc=internationalcorp,dc=com"} },
-                        {"name":"push_sim_user"},
-                        {"name":"add_nameserver", "args": {"nameserver_ip":"192.168.2.14"} }
-                        ] },
-
+                            {"name":"clear_nameserver"},
+                            {"name":"ldap_client_config", "args": {"ldap_ip":"192.168.2.10", 
+                                                                    "base":"dc=internationalcorp,dc=com", 
+                                                                    "uri":"uri ldap://internationalcorp.com/", 
+                                                                    "ldap_admin":"cn=admin,dc=internationalcorp,dc=com",
+                                                                    "tls":"true"} },
+                            {"name":"push_sim_user"},
+                            {"name":"add_nameserver", "args": {"nameserver_ip":"192.168.2.14"} }
+                            ] },
+    
         { "hostname": "workstation2Internationalcorp", "actions": [  
-                        {"name":"clear_nameserver"},
-                        {"name":"ldap_client_config", "args": {"ldap_ip":"192.168.2.10", 
-                                                                "base":"dc=internationalcorp,dc=com", 
-                                                                "uri":"uri ldap://internationalcorp.com/", 
-                                                                "ldap_admin":"cn=admin,dc=internationalcorp,dc=com"} },
-                        {"name":"push_sim_user"},
-                        {"name":"add_nameserver", "args": {"nameserver_ip":"192.168.2.14"} }
-                        ] },
-
+                            {"name":"clear_nameserver"},
+                            {"name":"ldap_client_config", "args": {"ldap_ip":"192.168.2.10", 
+                                                                    "base":"dc=internationalcorp,dc=com", 
+                                                                    "uri":"uri ldap://internationalcorp.com/", 
+                                                                    "ldap_admin":"cn=admin,dc=internationalcorp,dc=com",
+                                                                    "tls":"true"} },
+                            {"name":"push_sim_user"},
+                            {"name":"add_nameserver", "args": {"nameserver_ip":"192.168.2.14"} }
+                            ] },
+    
         { "hostname": "workstation3Internationalcorp", "actions": [  
-                        {"name":"clear_nameserver"},
-                        {"name":"ldap_client_config", "args": {"ldap_ip":"192.168.2.10", 
-                                                                "base":"dc=internationalcorp,dc=com", 
-                                                                "uri":"uri ldap://internationalcorp.com/", 
-                                                                "ldap_admin":"cn=admin,dc=internationalcorp,dc=com"} },
-                        {"name":"push_sim_user"},
-                        {"name":"add_nameserver", "args": {"nameserver_ip":"192.168.2.14"} }
-                        ] },
-
-        { "hostname": "workstation4Internationalcorp", "actions": [  
-                        {"name":"clear_nameserver"},
-                        {"name":"ldap_client_config", "args": {"ldap_ip":"192.168.2.10", 
-                                                                "base":"dc=internationalcorp,dc=com", 
-                                                                "uri":"uri ldap://internationalcorp.com/", 
-                                                                "ldap_admin":"cn=admin,dc=internationalcorp,dc=com"} },
-                        {"name":"push_sim_user"},
-                        {"name":"add_nameserver", "args": {"nameserver_ip":"192.168.2.14"} }
-                        ] },
-
-        { "hostname": "workstation5Internationalcorp", "actions": [  
-                        {"name":"clear_nameserver"},
-                        {"name":"ldap_client_config", "args": {"ldap_ip":"192.168.2.10", 
-                                                                "base":"dc=internationalcorp,dc=com", 
-                                                                "uri":"uri ldap://internationalcorp.com/", 
-                                                                "ldap_admin":"cn=admin,dc=internationalcorp,dc=com"} },
-                        {"name":"push_sim_user"},
-                        {"name":"add_nameserver", "args": {"nameserver_ip":"192.168.2.14"} }
-                        ] },
-
-        { "hostname": "workstation6Internationalcorp", "actions": [  
-                        {"name":"clear_nameserver"},
-                        {"name":"ldap_client_config", "args": {"ldap_ip":"192.168.2.10", 
-                                                                "base":"dc=internationalcorp,dc=com", 
-                                                                "uri":"uri ldap://internationalcorp.com/", 
-                                                                "ldap_admin":"cn=admin,dc=internationalcorp,dc=com"} },
-                        {"name":"push_sim_user"},
-                        {"name":"add_nameserver", "args": {"nameserver_ip":"192.168.2.14"} }
-                        ] },
+                            {"name":"clear_nameserver"},
+                            {"name":"ldap_client_config", "args": {"ldap_ip":"192.168.2.10", 
+                                                                    "base":"dc=internationalcorp,dc=com", 
+                                                                    "uri":"uri ldap://internationalcorp.com/", 
+                                                                    "ldap_admin":"cn=admin,dc=internationalcorp,dc=com",
+                                                                    "tls":"true"} },
+                            {"name":"push_sim_user"},
+                            {"name":"add_nameserver", "args": {"nameserver_ip":"192.168.2.14"} }
+                            ] },
                         
         { "hostname": "videoCenterInternationalcorp", "actions": [ 
                         {"name":"clear_nameserver"},
@@ -510,19 +521,28 @@
                         {"name":"install_motion", "args": {"motion_port":"8081", "security":{"username":"camera1", "password":"camera123", "private_key_certificate_name":"camera1.internationalcorp.com"}}}
                         ] },
 
-        { "hostname": "camera2Internationalcorp", "actions": [
-                        {"name":"clear_nameserver"},
-                        {"name":"generate_certificates", "args": {"ca_holder":"dnsIPN","ca_name":"caroot.com","middle_holder":"dnsInternationalcorp","middle_name":"internationalcorp.com","private_key_certificate_name":"camera2.internationalcorp.com","bits":"2048","version":"2","serial":"","C":"FR","ST":"France","L":"Paris","O":"Silicom","CN":"*.camera2.internationalcorp.com","days_validity":"360","dns":"camera2.internationalcorp.com"} },
-                        {"name":"install_virtual_camera", "args": {"video_url": "https://www.c-mor.com/video-surveillance-demo/sample-recordings-of-the-video-surveillance-system-c-mor/file/27-motion-detection-entrance-area?tmpl=component"}},
-                        {"name":"install_motion", "args": {"motion_port":"8081", "security":{"username":"camera2", "password":"camera123", "private_key_certificate_name":"camera2.internationalcorp.com"}}}
-                        ] },
 
-        { "hostname": "camera3Internationalcorp", "actions": [
-                        {"name":"clear_nameserver"},
-                        {"name":"generate_certificates", "args": {"ca_holder":"dnsIPN","ca_name":"caroot.com","middle_holder":"dnsInternationalcorp","middle_name":"internationalcorp.com","private_key_certificate_name":"camera3.internationalcorp.com","bits":"2048","version":"2","serial":"","C":"FR","ST":"France","L":"Paris","O":"Silicom","CN":"*.camera3.internationalcorp.com","days_validity":"360","dns":"camera3.internationalcorp.com"} },
-                        {"name":"install_virtual_camera", "args": {"video_url": "https://www.c-mor.com/video-surveillance-demo/sample-recordings-of-the-video-surveillance-system-c-mor/file/28-motion-detection-warehouse-door?tmpl=component"}},
-                        {"name":"install_motion", "args": {"motion_port":"8081", "security":{"username":"camera3", "password":"camera123", "private_key_certificate_name":"camera3.internationalcorp.com"}}}
-                        ] }
 
+
+        { "hostname": "dnsOrg", "actions": [ 
+                    {"name":"clear_nameserver"},
+                    {"name":"generate_middle_certificates", "args": {"ca_holder":"dnsIPN","ca_name":"caroot.com","private_key_middle_certificate_name":"internationalcorp.com","bits":"2048","version":"2","serial":"","C":"FR","ST":"France","L":"Paris","O":"International Corp","CN":"internationalcorp.com","days_validity":"360"} },
+                    {"name":"clear_nameserver"},
+                    {"name":"dns_installation", "args": {"domain_name":"org","ns":"ns.org","ip_resolution":"10.10.11.14", "forwarders":[]} },
+                    {"name":"dns_resolve_name", "args": {"domain_name": "pypi.org",
+                                                            "ns":"ns.org",
+                                                            "ip_resolution":"10.10.11.15",
+                                                            "mail":"",
+                                                            "alias":[""]} }
+            ] },
+
+        { "hostname": "pypiPublic", "actions": [  
+            {"name":"generate_certificates", "args": {"ca_holder":"dnsIPN","ca_name":"caroot.com","middle_holder":"dnsOrg","middle_name":"internationalcorp.com","private_key_certificate_name":"pypi.org","bits":"2048","version":"2","serial":"","C":"FR","ST":"France","L":"Bordeaux","O":"Python","CN":"*.pypi.org","days_validity":"360","dns":"pypi.org"} },
+            {"name":"clear_nameserver"},
+            {"name":"install_pip_server", "args": {"package_directory":"/pypiserver/packages/", "ssl":"true"} },
+            {"name":"upload_pip_lib", "args": {"pip_libs":["six"]} },
+            {"name":"create_local_user", "args": {"username":"user","password":"user"} },
+            {"name":"add_nameserver", "args": {"nameserver_ip":"10.10.10.14"} }
+            ] }
     ]
 }

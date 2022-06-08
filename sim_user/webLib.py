@@ -14,12 +14,27 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 
 def create_driver(proxy=""):
+    """ Create selenium driver.
+        proxy (str Optional):
+    
+    Returns:
+        selenium.driver: Return selenium webdriver object.
+    """
     try:
+        profile = webdriver.FirefoxProfile()
+        profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "text/plain, application/x-tar")
+        profile.set_preference("browser.helperApps.neverAsk.openFile", "text/plain, application/x-tar")
+        profile.set_preference("browser.download.manager.showWhenStarting", False)
+        # profile.set_preference("browser.download.prompt_for_download", False)
+        profile.set_preference("browser.download.dir", "/")
+        profile.set_preference("browser.download.folderList", 2)
+        
         firefox_options = Options()
         firefox_options.headless = True
-        firefox_binary = FirefoxBinary("/usr/bin/firefox")
-        executable_path = "/tmp/sim_user/drivers/geckodriver"
-        log_path = "/tmp/sim_user/geckodriver.log"
+        firefox_options.set_preference("download.prompt_for_download", False)
+        firefox_binary = FirefoxBinary("/usr/bin/firefox-esr")
+        executable_path = "/sim_user/drivers/geckodriver"
+        log_path = "/sim_user/geckodriver.log"
 
         if proxy != "":
             firefox_capabilities = webdriver.DesiredCapabilities.FIREFOX
@@ -27,14 +42,22 @@ def create_driver(proxy=""):
                 "proxyType":"MANUAL",
                 "httpProxy":proxy
             }
-            return webdriver.Firefox(executable_path=executable_path,options=firefox_options,firefox_binary=firefox_binary,log_path=log_path,capabilities=firefox_capabilities)
+            return webdriver.Firefox(firefox_profile=profile, executable_path=executable_path, options=firefox_options,firefox_binary=firefox_binary,log_path=log_path,capabilities=firefox_capabilities)
         else:
-            return webdriver.Firefox(executable_path=executable_path,options=firefox_options,firefox_binary=firefox_binary,log_path=log_path)
-    except Exception as e :
+            return webdriver.Firefox(firefox_profile=profile, executable_path=executable_path, options=firefox_options,firefox_binary=firefox_binary,log_path=log_path)
+    except Exception as e:
         print( Fore.RED+ " => create_driver failed!    -- "+ time.strftime("%H:%M:%S", time.localtime()) +Style.RESET_ALL )
         print(e)
+        return 1
 
 def get_current_page(driver=None, url=None):
+    """ Execute multiple user action on dvwa server.
+            driver (selenium.driver): This value is the selenium webdriver object.
+            url (str): This value is the website's url.
+ 
+    Returns:
+        str: Return the url's source pasge.
+    """
     if driver == None and url == None:
         driver = create_driver()
         driver.get(url)
@@ -46,15 +69,19 @@ def get_current_page(driver=None, url=None):
 
     return driver.page_source
 
-def move_2_link(driver, verbose=True):
+def move_2_link(driver, link, verbose=True):
+    """ Click on a specific url specify in link attribut.
+            driver (selenium.driver): This value is the selenium webdriver object.
+            link (str): Link url where the user must click.
+            verbose (boolean): Print information about function progress.
+ 
+    Returns:
+        boolean: Return 0 if the user could move to the other url, in other case return 1.
+    """
     try:
-        soup = BeautifulSoup(driver.page_source, features='html.parser')
-        links = soup.find_all(href=True)
-        link = random.choice(links)
-        
         if verbose:
             print(Fore.GREEN+" ==> [move_2_link] Old url: "+driver.current_url, end="")
-        action = ActionChains(driver).move_to_element(driver.find_element_by_link_text(link.string)).pause(1)
+        action = ActionChains(driver).move_to_element(driver.find_element_by_link_text(link)).pause(1)
         action.click().pause(1)
         action.perform()
         time.sleep(2)
@@ -65,10 +92,32 @@ def move_2_link(driver, verbose=True):
         print(Fore.RED+" ==> [move_2_link] failed!  -- "+time.strftime("%H:%M:%S", time.localtime())+Style.RESET_ALL)
         return 1
 
+def move_2_random_link(driver, verbose=True):
+    """ Click on a random link in the website source page.
+            driver (selenium.driver): This value is the selenium webdriver object.
+            verbose (boolean): Print information about function progress.
+ 
+        Returns:
+            boolean: Return 0 if the user could move to the other url, in other case return 1.
+    """
+    soup = BeautifulSoup(driver.page_source, features='html.parser')
+    links = soup.find_all(href=True)
+    link = random.choice(links).string
+    move_2_link(driver, link, verbose=False)
+
 ################################# DVWA #################################
 
 def dvwa_login_(driver, base_url, username, password):
-    driver.get(base_url+"login.php")
+    """ Identifies the user on the homepage of the dvwa website
+            driver (selenium.driver): This value is the selenium webdriver object.
+            base_url (str): This value is the basic url to access to the dvwa website.
+            username (str): This value is the login username of the user.
+            password (str): This value is the login password of the user.
+ 
+        Returns:
+            None
+    """
+    driver.get(base_url+"/login.php")
     action = ActionChains(driver)
 
     action.move_to_element(driver.find_element_by_name("username")).pause(1)
@@ -86,9 +135,19 @@ def dvwa_login_(driver, base_url, username, password):
     time.sleep(2)
 
 def dvwa_login(driver, base_url, username, password, verbose=True):
+    """ Identifies the user on the homepage of the dvwa website and verify his connection.
+            driver (selenium.driver): This value is the selenium webdriver object.
+            base_url (str): This value is the basic url to access to the dvwa website.
+            username (str): This value is the login username of the user.
+            password (str): This value is the login password of the user.
+            verbose (boolean): Print information about function progress.
+ 
+        Returns:
+            boolean: 0 if fuction runs correctly. If an error occured return 1.
+    """
     try:
         dvwa_login_(driver, base_url, username, password)
-        if driver.current_url == base_url+"setup.php":
+        if driver.current_url == base_url+"/setup.php":
             driver.find_element_by_name("create_db").location_once_scrolled_into_view
             action = ActionChains(driver)
             action.move_to_element(driver.find_element_by_name("create_db")).pause(1)
@@ -107,7 +166,16 @@ def dvwa_login(driver, base_url, username, password, verbose=True):
         return 1
 
 def dvwa_command_injection(driver,base_url,ip, verbose=True):
-    driver.get(base_url+"vulnerabilities/exec")
+    """ Executes a regular command on the dvwa injection tab. 
+            driver (selenium.driver): This value is the selenium webdriver object.
+            base_url (str): This value is the basic url to access to the dvwa website.
+            ip (str): This value is the ip to ping.
+            verbose (boolean): Print information about function progress.
+
+        Returns:
+            boolean: 0 if fuction runs correctly. If an error occured return 1.
+    """
+    driver.get(base_url+"/vulnerabilities/exec")
     try:
         action = ActionChains(driver)
         action.move_to_element(driver.find_element_by_name("ip")).pause(1)
@@ -128,7 +196,16 @@ def dvwa_command_injection(driver,base_url,ip, verbose=True):
         return 1
 
 def dvwa_xss_reflected(driver, base_url, name, verbose=True):
-    driver.get(base_url+"vulnerabilities/xss_r")
+    """ Executes a regular command on the dvwa injection tab. 
+            driver (selenium.driver): This value is the selenium webdriver object.
+            base_url (str): This value is the basic url to access to the dvwa website.
+            ip (str): This value is the ip to ping.
+            verbose (boolean): Print information about function progress.
+
+        Returns:
+            boolean: 0 if fuction runs correctly. If an error occured return 1.
+    """
+    driver.get(base_url+"/vulnerabilities/xss_r")
     try:
         action = ActionChains(driver)
         action.move_to_element(driver.find_element_by_name("name")).pause(1)
@@ -149,7 +226,15 @@ def dvwa_xss_reflected(driver, base_url, name, verbose=True):
         return 1
 
 def change_security(driver, base_url, difficulty=1):
-    driver.get(base_url+"security.php")
+    """ Change the security level.
+            driver (selenium.driver): This value is the selenium webdriver object.
+            base_url (str): This value is the basic url to access to the dvwa website.
+            difficulty (int): This value is new difficulty level.
+
+        Returns:
+            boolean: 0 if fuction runs correctly. If an error occured return 1.
+    """
+    driver.get(base_url+"/security.php")
     time.sleep(3)
 
     diff_button = driver.find_element_by_name("security")
@@ -165,6 +250,16 @@ def change_security(driver, base_url, difficulty=1):
 ################################# Chat-web-application #################################
 
 def chat_web_application_login(driver, base_url, username, password, verbose=True):
+    """ Connection function to the chat application.
+            driver (selenium.driver): This value is the selenium webdriver object.
+            base_url (str): This value is the basic url to access to the dvwa website.
+            username (str): This value is the username on this web application.
+            password (str): This value is the password on this web application.
+            verbose (boolean): Print information about function progress.
+
+        Returns:
+            boolean: 0 if fuction runs correctly. If an error occured return 1.
+    """
     try:
         driver.get(base_url+"index.php")
         action = ActionChains(driver)
@@ -197,6 +292,17 @@ def chat_web_application_login(driver, base_url, username, password, verbose=Tru
         return 1
 
 def chat_web_application_signup_(driver, base_url, username, email, password, verbose=True):
+    """ Register a new user in the chat application.
+            driver (selenium.driver): This value is the selenium webdriver object.
+            base_url (str): This value is the basic url to access to the dvwa website.
+            username (str): This value is the username for regitration on the chat application.
+            email (str): This value is the user's email for regitration on the chat application.
+            password (str): This value is the password for regitration on the chat application.
+            verbose (boolean): Print information about function progress.
+
+        Returns:
+            boolean: 0 if fuction runs correctly. If an error occured return 1.
+    """
     try:
         driver.get(base_url+"index.php")
         action = ActionChains(driver)
@@ -238,6 +344,14 @@ def chat_web_application_signup_(driver, base_url, username, email, password, ve
         return 1
 
 def chat_web_application_search_user(driver, username, verbose=True):
+    """ Search a user in the web application database
+            driver (selenium.driver): This value is the selenium webdriver object.
+            username (str): This value is the username for regitration on the chat application.
+            verbose (boolean): Print information about function progress.
+
+        Returns:
+            boolean: 0 if fuction runs correctly. If an error occured return 1.
+    """
     try:
         action = ActionChains(driver)
 
@@ -263,6 +377,15 @@ def chat_web_application_search_user(driver, username, verbose=True):
         return 1
 
 def chat_web_application_send_msg(driver, username, msg, verbose=True):
+    """ Send a message to an other user.
+            driver (selenium.driver): This value is the selenium webdriver object.
+            username (str): This value is the username for regitration on the chat application.
+            msg (str): Thi value is the message content. 
+            verbose (boolean): Print information about function progress.
+
+        Returns:
+            boolean: 0 if fuction runs correctly. If an error occured return 1.
+    """
     try:
         msg = msg.strip()
         action = ActionChains(driver)
@@ -292,6 +415,13 @@ def chat_web_application_send_msg(driver, username, msg, verbose=True):
         return 1
 
 def chat_web_application_logout(driver, verbose=True):
+    """ Logout from the user account on the chat application.
+            driver (selenium.driver): This value is the selenium webdriver object.
+            verbose (boolean): Print information about function progress.
+
+        Returns:
+            boolean: 0 if fuction runs correctly. If an error occured return 1.
+    """
     try:
         action = ActionChains(driver)
         action.move_to_element(driver.find_element_by_xpath("/html/body/main/div/div[@class='subelement13']"))
@@ -308,6 +438,20 @@ def chat_web_application_logout(driver, verbose=True):
 ################################ Gnu social ###################################
 
 def gnu_social_register_account(driver, url, nickname, password, email, fullname, bio, location, verbose=True):
+    """ Register a new user in the chat application.
+            driver (selenium.driver): This value is the selenium webdriver object.
+            url (str): This value is the basic url to access to the dvwa website.
+            nickname (str): This value is the username for regitration on the chat application.
+            password (str): This value is the password for regitration on the chat application.
+            email (str): This value is the user's email for regitration on the chat application.
+            fullname (str): This value is fullname of the new user.
+            bio (str): This value is a user's description.
+            location (str): email (str): This value is the user's location.
+            verbose (boolean): Print information about function progress.
+
+        Returns:
+            boolean: 0 if fuction runs correctly. If an error occured return 1.
+    """
     captcha=""
     driver.get(url+"index.php/main/register")
 
@@ -365,6 +509,16 @@ def gnu_social_register_account(driver, url, nickname, password, email, fullname
     return 1
 
 def gnu_social_login(driver, url, nickname, password, verbose=True):
+    """ Connection function to the chat application.
+            driver (selenium.driver): This value is the selenium webdriver object.
+            base_url (str): This value is the basic url to access to the dvwa website.
+            nickname (str): This value is the username on this web application.
+            password (str): This value is the password on this web application.
+            verbose (boolean): Print information about function progress.
+
+        Returns:
+            boolean: 0 if fuction runs correctly. If an error occured return 1.
+    """
     driver.get(url+"index.php/main/login")
 
     action = ActionChains(driver)
@@ -388,6 +542,16 @@ def gnu_social_login(driver, url, nickname, password, verbose=True):
     return 1
 
 def gnu_social_send_status(driver, url, status="Example status", verbose=True):
+    """ Connection function to the chat application.
+            driver (selenium.driver): This value is the selenium webdriver object.
+            base_url (str): This value is the basic url to access to the dvwa website.
+            nickname (str): This value is the username on this web application.
+            password (str): This value is the password on this web application.
+            verbose (boolean): Print information about function progress.
+
+        Returns:
+            boolean: 0 if fuction runs correctly. If an error occured return 1.
+    """
     driver.get(url+"index.php/main/public")
 
     action = ActionChains(driver)
@@ -399,7 +563,14 @@ def gnu_social_send_status(driver, url, status="Example status", verbose=True):
     action.click().pause(1)
     action.perform()
 
+## In progress 
 def gnu_social_read_timeline(driver, url):
+    """ Connection function to the chat application.
+            driver (selenium.driver): This value is the selenium webdriver object.
+            url (str): This value is the basic url to access to the dvwa website.
+        Returns:
+            boolean: 0 if fuction runs correctly. If an error occured return 1.
+    """
     status = []
     driver.get(url+"index.php/main/public")
 

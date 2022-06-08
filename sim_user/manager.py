@@ -14,9 +14,9 @@ class Thread_user(threading.Thread):
         self.user = user
 
     def run(self):
-        os.system("su "+self.user["name"]+" -c 'python3 /tmp/sim_user/user_simulation.py'")
+        os.system("su "+self.user["name"]+" -c 'python3 /sim_user/user_simulation.py'")
 
-users = load_json_file("/tmp/sim_user/users.json")
+users = load_json_file("/sim_user/users.json")
 for user in users["users"]:
     thread = Thread_user(user)
     thread.start()

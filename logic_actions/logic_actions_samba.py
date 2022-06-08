@@ -3,7 +3,12 @@ from colorama import Fore, Style
 from .logic_actions_utils import create_execute_command_remote_bash, execute_command, install, upload_file, delete_file, create_local_user, restart_service, create_local_group, change_fileorfolder_group_owner, add_user2group
 
 def install_samba(instance, verbose=True):
-    """ Install and configure samba on the remote instance  """
+    """ Install and configure samba on the remote instance.
+    args {
+         }
+    Returns:
+        int: Return 1 if the function works successfully, otherwise 0.
+    """
     if install(instance, {"module":"samba"}, verbose=False) == 1:
         return 1
     execute_command(instance, {"command":["cp", "/etc/samba/smb.conf", "/etc/samba/smb.conf.origin"], "expected_exit_code":"0"}, verbose=False)
@@ -13,7 +18,7 @@ def install_samba(instance, verbose=True):
     file_samba_conf.write("[global] \n")
     file_samba_conf.write("     workgroup = WORKGROUP\n")
     file_samba_conf.write("     log file = /var/log/samba/samba.log\n")
-    file_samba_conf.write("     log level = 5\n")
+    file_samba_conf.write("     log level = 2\n")
     file_samba_conf.close()
     if upload_file(instance, {"instance_path":"/etc/samba/smb.conf", "host_manager_path":"simulation/workstations/"+instance.name+"/smb.conf"}, verbose=False) == 1:
         return 1
@@ -22,8 +27,29 @@ def install_samba(instance, verbose=True):
     return 0
 
 def add_share_file(instance, args, verbose=True):
-    """" Add new share folder configure with restricted acces on remote folder """
+    """" Add new share folder configure with restricted acces on remote folder 
+    arg (dict of str: Optional): This argument list maps arguments and their value.
+            {
+                share_file_name (str): This value is the share file name.
+                comment (str): This value is a comment about the share file service.
+                private (str): This value is a boolean who define if the samba service is private or public.
+                browseable (str): This is a boolean who indicate if client could see share file.
+                    Examples:
+                    users -> yes
+                    users -> no
+                writable (str): This is a boolean who indicate if client could modified objects in share file.
+                    Examples: 
+                    writable -> yes
+                    writable -> no
+                valid_users (list): This value is a user list who can access to the share file.
+                users (list): This value is a user list with their surname and password.
+                    Examples:
+                    users -> [["ceo","ceo123"], ... ,["intern","intern123"]]
+            }
+    """
     execute_command(instance, {"command":["mkdir", "-p", "/srv/samba/"+args["share_file_name"]+"/"], "expected_exit_code":"0"}, verbose=False)
+    execute_command(instance, {"command":["touch", "/srv/samba/"+args["share_file_name"]+"/test.txt"], "expected_exit_code":"0"}, verbose=False)
+
     if create_local_group(instance, {"new_group":args["share_file_name"]}, verbose=False) == 1:
         return 1
     if change_fileorfolder_group_owner(instance, {"fileorfolder_path":"/srv/samba/"+args["share_file_name"]+"/", "new_group":args["share_file_name"]}, verbose=False) == 1:
@@ -38,17 +64,7 @@ def add_share_file(instance, args, verbose=True):
             create_execute_command_remote_bash(instance, {"script_name":"user_smb_"+user[0]+".sh", "commands":[
                                                                                                                "echo -e \""+user[1]+"\n"+user[1]+"\" | smbpasswd -a "+user[0]
                                                                                                               ], "delete":"false"}, verbose=False)
-            
-            # add_user = open("simulation/workstations/"+instance.name+"/user_smb_"+user[0]+".sh", "w")
-            # add_user.write("#!/bin/bash \n")
-            # add_user.write("echo -e \""+user[1]+"\n"+user[1]+"\" | smbpasswd -a "+user[0])
-            # add_user.close()
-            # if upload_file(instance, {"instance_path":"/root/user_smb_"+user[0]+".sh", "host_manager_path":"simulation/workstations/"+instance.name+"/user_smb_"+user[0]+".sh"}, verbose=False) == 1:
-            #     return 1
-            # execute_command(instance, {"command":["chmod", "+x", "/root/user_smb_"+user[0]+".sh"], "expected_exit_code":"0"}, verbose=False)
-            # execute_command(instance, {"command":["./user_smb_"+user[0]+".sh"], "expected_exit_code":"0"}, verbose=False)
-            # if delete_file(instance, {"instance_path":"/root/user_smb_"+user[0]+".sh"}, verbose=False) == 1:
-                # return 1
+        
             
             if add_user2group(instance, {"group_name":args["share_file_name"], "username":user[0]}, verbose=False) == 1:
                 return 1

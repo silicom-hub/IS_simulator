@@ -1,97 +1,94 @@
-import os
+import re
 import time
-import tempfile
-from datetime import datetime
-from smb.SMBConnection import SMBConnection
 from colorama import Style, Fore
-from essential_generators import DocumentGenerator
+import smbclient
+import os
 
-def connect_samba_server(username,password,workstation_name,server_name,server_ip, verbose=True):
-    smb_session = SMBConnection(username,password,workstation_name,server_name,use_ntlm_v2=True)
+def connect_samba_server(server_ip, share, username, password, domain, verbose=True):
+    """ Connect user to smb service.
+            server_ip (str): This value is the ip smb server's ip. 
+            share (str): This value is the share file name.
+            username (str): This value is the login username required to connect to smb service.
+            password (str): This value is the login password required to connect to smb service.
+            domain (str): This value is the server domain name.
+            verbose (boolean): Print information about function progress.
+    Returns:
+        smb_object
+    """
+    smb = smbclient.SambaClient(server=server_ip, share=share, username=username, password=password, domain='WORKGROUP')
+    return smb
+
+def get_remote_dir(server_ip, share, username, password, domain, remote_path, verbose=True):
+    """ Get file and folder on the remote file server.
+            server_ip (str): This value is the ip smb server's ip. 
+            share (str): This value is the share file name.
+            username (str): This value is the login username required to connect to smb service.
+            password (str): This value is the login password required to connect to smb service.
+            domain (str): This value is the server domain name.
+            remote_path (str): This value is the remote path where the user is located.
+            verbose (boolean): Print information about function progress.
+    Returns:
+        list: Return all files.
+    """
+    smb = connect_samba_server(server_ip, share, username, password, domain, verbose=True)
+    files = smb.listdir(remote_path)
+    smb.close()
+    return files
+
+def upload(server_ip, share, username, password, domain, remote_path, local_path, verbose=True):
+    """ Get file and folder on the remote file server.
+            server_ip (str): This value is the ip smb server's ip. 
+            share (str): This value is the share file name.
+            username (str): This value is the login username required to connect to smb service.
+            password (str): This value is the login password required to connect to smb service.
+            domain (str): This value is the server domain name.
+            remote_path (str): This value is the remote file path to uploaded.
+            local_path (str): This value is the remote path where the file will uploaded.
+            verbose (boolean): Print information about function progress.
+    Returns:
+        boolean: 0 if fuction runs correctly. If an error occured return 1.
+    """
     try:
-        smb_session.connect(server_ip,445)
-        if verbose:
-            print(Fore.GREEN+" ===> Samba connection: "+server_name+" was successfully   -- "+time.strftime("%H:%M:%S", time.localtime())+Style.RESET_ALL)
-        return smb_session
-    except:
-        print(Fore.RED+" ===> Samba connection: "+server_name+" failed   -- "+time.strftime("%H:%M:%S", time.localtime())+Style.RESET_ALL)
+        smb = connect_samba_server(server_ip, share, username, password, domain, verbose=True)
+        smb.upload(local_path, remote_path)
+        smb.close()
+        regex = re.compile("((?:[^/]*/)*)(.*)")
+        for file in get_remote_dir(server_ip, share, username, password, domain, "/", verbose=True):
+            if regex.match(remote_path).group(2) in file:
+                print(Fore.GREEN+" ===> [upload]  {"+regex.match(local_path).group(2)+"}  -- "+time.strftime("%H:%M:%S", time.localtime())+Style.RESET_ALL)
+                return True
+        print(Fore.RED+" ===> [upload]  {"+regex.match(local_path).group(2)+"}  failed! -- "+time.strftime("%H:%M:%S", time.localtime())+Style.RESET_ALL)
         return False
-
-def get_service_name(smb_session):
-    share_names = []
-    shares = smb_session.listShares()
-    for share in shares:
-        share_names.append(share.name)
-    return share_names
-
-def diconnnect(smb_session, verbose=True):
-    try:
-        smb_session.close()
-        if verbose:
-            print(Fore.GREEN+" ===> Samba logout was successfully   -- "+time.strftime("%H:%M:%S", time.localtime())+Style.RESET_ALL)
-        return True
-    except:
-        print(Fore.RED+" ===> Samba logout failed   -- "+time.strftime("%H:%M:%S", time.localtime())+Style.RESET_ALL)
-        return False
-
-
-
-def get_remote_dir(username, password, workstation_name, server_name, server_ip, service_name,path, verbose=True):
-    smb_session = connect_samba_server(username, password, workstation_name, server_name, server_ip, verbose=False)
-    try:
-        dirs = []
-        files = smb_session.listPath(service_name,path)
-        if verbose:
-            print(Fore.GREEN+" ===> [get_remote_dir]  {"+len(files)+"}   -- "+time.strftime("%H:%M:%S", time.localtime())+Style.RESET_ALL)
-        return files
     except Exception as e:
-        print(e)
-        print(Fore.RED+" ===> [get_remote_dir]  failed!   -- "+time.strftime("%H:%M:%S", time.localtime())+Style.RESET_ALL)
+        print(Fore.RED+" ===> [upload]  failed during execution! -- "+time.strftime("%H:%M:%S", time.localtime())+Style.RESET_ALL)
         return False
 
-def upload(username, password, workstation_name, server_name, server_ip, service_name,path,filename,local_path, verbose=True):
-    smb_session = connect_samba_server(username, password, workstation_name, server_name, server_ip, verbose=False)
+def download(server_ip, share, username, password, domain, remote_path, local_path, verbose=True):
+    """ Get file and folder on the remote file server.
+            server_ip (str): This value is the ip smb server's ip. 
+            share (str): This value is the share file name.
+            username (str): This value is the login username required to connect to smb service.
+            password (str): This value is the login password required to connect to smb service.
+            domain (str): This value is the server domain name.
+            remote_path (str): This value is the remote file path to download.
+            local_path (str): This value is the remote path where the file will download.
+            verbose (boolean): Print information about function progress.
+    Returns:
+        boolean: 0 if fuction runs correctly. If an error occured return 1.
+    """
     try:
-        if filename == "":
-            gen = DocumentGenerator()
-            filename = gen.word()+".txt"
-            local_file = open(local_path+filename,"w")
-            local_file.write(gen.paragraph())
-            local_file.close()
-
-        upload_file = tempfile.TemporaryFile()
-        upload_file.write(open(local_path+filename,"rb").read())
-        upload_file.seek(0)
-        smb_session.storeFile(service_name,path+filename,upload_file)
-        if verbose:
-            upload_file.seek(0, os.SEEK_END)
-            print(Fore.GREEN+" ===> [upload]  {"+filename+"}  "+str(upload_file.tell())+" bytes -- "+time.strftime("%H:%M:%S", time.localtime())+Style.RESET_ALL)
-        upload_file.close()
-        diconnnect(smb_session, verbose=False)
-        return True
-    except Exception as e:
-        print(e)
-        print(Fore.RED+" ===> [upload]  {"+filename+"}  failed! -- "+time.strftime("%H:%M:%S", time.localtime())+Style.RESET_ALL)
-        diconnnect(smb_session, verbose=False)
+        smb = connect_samba_server(server_ip, share, username, password, domain, verbose=True)
+        smb.download(remote_path, local_path)
+        smb.close()
+        regex = re.compile("((?:[^/]*/)*)(.*)")
+        files = os.listdir(regex.match(local_path).group(1))
+        if regex.match(local_path).group(2) in files:
+            if verbose:
+                print(Fore.GREEN+" ===> [download]  {"+regex.match(local_path).group(2)+"}  -- "+time.strftime("%H:%M:%S", time.localtime())+Style.RESET_ALL)
+            return True
+        print(Fore.RED+" ===> [download]  {"+regex.match(local_path).group(2)+"}  failed! -- "+time.strftime("%H:%M:%S", time.localtime())+Style.RESET_ALL)
         return False
-
-def download(username, password, workstation_name, server_name, server_ip, service_name,path,remote_filename,local_path, verbose=True):
-    smb_session = connect_samba_server(username,password,workstation_name,server_name,server_ip, verbose=False)
-    try:
-        download_file = tempfile.NamedTemporaryFile()
-        local_file = open(local_path+remote_filename,"w")
-        smb_session.retrieveFile(service_name,remote_filename,download_file)
-        download_file.seek(0)
-        for line in download_file:
-            local_file.write(line.decode(("utf-8")))
-        if verbose:
-            download_file.seek(0, os.SEEK_END)
-            print(Fore.GREEN+" ===> [download]  {"+local_path+remote_filename+"}  "+str(local_file.tell())+" bytes -- "+time.strftime("%H:%M:%S", time.localtime())+Style.RESET_ALL)
-        local_file.close()
-        diconnnect(smb_session, verbose=False)
-        return True
     except Exception as e:
+        print(Fore.RED+" ===> [download]  failed during execution! -- "+time.strftime("%H:%M:%S", time.localtime())+Style.RESET_ALL)
         print(e)
-        print(Fore.RED+" ===> [download]  {"+local_path+remote_filename+"}  failed! -- "+time.strftime("%H:%M:%S", time.localtime())+Style.RESET_ALL)
-        diconnnect(smb_session, verbose=False)
         return False

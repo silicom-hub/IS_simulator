@@ -97,6 +97,10 @@ It looks like:
 
 # Optional features
 
+## g (graph representation)
+
+This option generates a graphic representing the network topology of the environment created in pdf format.
+
 ## X11 (Approximately 0,5 GB of RAM consumption)
 
 To use graphical application inside a LXC container and still see the result you need to configure a X11 server inside the LXC container.
@@ -163,6 +167,8 @@ firefox --new-instance
 ```
 Then access kibana by going to 'localhost:5601'
 
+Si_simulator provides the visualization of the hacker's activity. To initialize the dashboard you have to go to /et/kibana/elk_gui_conf/ and execute kibana_conf.py.
+
 ## HMI
 
 To generate configuration files easier, si_simulator has a hmi.
@@ -188,7 +194,7 @@ Delete network
 ```sh
 lxc network delete [network_name]
 ```
-Be careful you can't delete multiple networks in one line, you must repeat the command for each network.
+Be carefull you can't delete multiple networks in one line, you must repeat the command for each network.
 
 If any problem, please check in *simulation/Configurations/conf_physic_test.json* the gateway and the ip address of the router.
 Change the values of the key `gateway` and the key `lxdbr0` `ip_v4` to your own ip address but keeping the last digit
