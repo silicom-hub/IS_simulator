@@ -167,7 +167,12 @@ firefox --new-instance
 ```
 Then access kibana by going to 'localhost:5601'
 
-Si_simulator provides the visualization the hacker's activity. To initialize the dashboard you have to go to /et/kibana/elk_gui_conf/ and execute kibana_conf.py.
+Si_simulator provides the visualization of the hacker's activity. To initialize the dashboard you have to go to /et/kibana/elk_gui_conf/ and execute kibana_conf.py.
+
+## HMI
+
+To generate configuration files easier, si_simulator has a hmi.
+[HMI](panel/hmi_readme.md)
 
 # Helper
 List all instances
