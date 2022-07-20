@@ -46,7 +46,7 @@
         {"hostname":"elk", "distribution":"ubuntu", "release":"jammy", "networks": [
             {"name": "hub", "interface":"eth1", "ip_v4": "1.1.1.17", "subnet": "24"}
             ]
-        ,"gateway":"192.168.1.1", "camera":"false"},
+        ,"gateway":"1.1.1.1", "camera":"false"},
 
         {"hostname":"hacker", "distribution":"ubuntu", "release":"jammy", "networks": [
             {"name": "hub", "interface":"eth1", "ip_v4": "1.1.1.40", "subnet": "24"}
